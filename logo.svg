@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+<title id="title">FEED-MATRIX</title><desc id="desc">Ikon ayam, daun, dan grafik pertumbuhan dalam gradasi ungu.</desc>
+<defs>
+ <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A678E6"/><stop offset=".52" stop-color="#8050D0"/><stop offset="1" stop-color="#4C218D"/></linearGradient>
+ <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EDE4FA"/><stop offset="1" stop-color="#C9AEF5"/></linearGradient>
+</defs>
+<circle cx="64" cy="64" r="61" fill="#F8F7FC"/>
+<path d="M18 83C18 57 33 36 56 31c13-3 27 1 37 11 11 11 15 25 11 39-4 18-20 29-42 29H44C28 110 18 99 18 83Z" fill="url(#purple)"/>
+<path d="M27 82c5-14 15-24 29-29-2 13-10 25-23 31 13 2 25 10 31 22-18 0-31-8-37-24Z" fill="url(#leaf)"/>
+<path d="M43 67c-1-16 8-29 22-33 3-9 11-13 18-9 5 3 7 8 5 14 8 5 12 14 10 23-2 13-13 21-28 21H58c-9 0-15-7-15-16Z" fill="url(#purple)"/>
+<path d="M74 26c-1-8 5-13 10-10 5 2 5 7 3 11 8-2 13 2 13 7-1 5-6 7-12 6" fill="#A678E6"/>
+<path d="M88 48l18 6-16 8" fill="#F0B35C"/>
+<circle cx="79" cy="42" r="3" fill="#32145F"/>
+<path d="M60 80v18M75 72v26M90 62v36" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+<path d="M54 96l13-10 11 4 17-19" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
+</svg>

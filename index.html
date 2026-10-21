@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FEED-MATRIX adalah sistem monitoring dan optimasi pakan broiler berbasis analitik.">
+    <title>FEED-MATRIX | Precision Feed Monitoring</title>
+
+    <!-- File CSS akan dibuat pada Tahap 2 -->
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =========================================
+         1. HEADER DAN NAVBAR
+    ========================================== -->
+    <header class="header" id="navbar">
+        <div class="container navbar">
+
+            <a href="#home" class="logo">
+                <img class="logo-icon" src="logo.svg" alt="Logo FEED-MATRIX">
+                <span>FEED-<strong>MATRIX</strong></span>
+            </a>
+
+            <nav class="nav-menu" aria-label="Navigasi utama">
+                <a href="#home">Home</a>
+                <a href="#fitur">Fitur Utama</a>
+                <a href="#dashboard">Dashboard</a>
+                <a href="#marketplace">Marketplace</a>
+                <a href="#edukasi">Edukasi</a>
+                <a href="#supplier">Direktori Pakan</a>
+                <a href="#faq">FAQ</a>
+            </nav>
+
+            <div class="nav-actions">
+                <a href="#login" class="btn btn-outline" id="btn-login">
+                    Login
+                </a>
+
+                <a href="#dashboard" class="btn btn-primary" id="btn-demo">
+                    Coba Demo
+                </a>
+            </div>
+
+        </div>
+    </header>
+
+
+
+    <!-- =========================================
+         HALAMAN LOGIN (layar penuh)
+    ========================================== -->
+    <div class="login-page" id="login-page" hidden role="dialog" aria-modal="true" aria-labelledby="login-title">
+        <div class="login-card">
+
+            <button type="button" class="login-back" id="login-close">
+                ← Kembali ke beranda
+            </button>
+
+            <a href="#login" class="logo login-logo" tabindex="-1">
+                <img class="logo-icon" src="logo.svg" alt="">
+                <span>FEED-<strong>MATRIX</strong></span>
+            </a>
+
+            <h2 id="login-title">Masuk ke Dashboard</h2>
+            <p class="login-sub" id="login-sub">Masuk untuk mengakses dashboard monitoring pakan.</p>
+
+            <div class="login-tabs" role="tablist">
+                <button type="button" class="login-tab active" id="tab-masuk" data-mode="masuk" role="tab">Masuk</button>
+                <button type="button" class="login-tab" id="tab-daftar" data-mode="daftar" role="tab">Daftar</button>
+            </div>
+
+            <form id="login-form" novalidate>
+                <div class="form-group" id="group-nama" hidden>
+                    <label for="login-nama">Nama</label>
+                    <input type="text" id="login-nama" autocomplete="name" placeholder="Nama lengkap">
+                </div>
+
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" autocomplete="email" placeholder="nama@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-pass">Password</label>
+                    <div class="password-wrap">
+                        <input type="password" id="login-pass" autocomplete="current-password" placeholder="Minimal 6 karakter" required>
+                        <button type="button" id="toggle-pass" class="toggle-pass" aria-label="Tampilkan password">Tampilkan</button>
+                    </div>
+                </div>
+
+                <p class="login-error" id="login-error" role="alert" hidden></p>
+
+                <button type="submit" class="btn btn-primary" id="login-submit">Masuk dengan Email</button>
+            </form>
+
+            <div class="login-divider"><span>atau</span></div>
+
+            <div id="google-btn" class="google-btn-wrap"></div>
+            <button type="button" class="btn btn-outline btn-google" id="google-fallback">
+                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.6 5.9c4.5-4.1 6.9-10.2 6.9-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.3 0 11.6-2.1 15.5-5.7l-7.6-5.9c-2.1 1.4-4.8 2.3-7.9 2.3-6.3 0-11.6-4-13.5-9.6l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+                Lanjutkan dengan Google
+            </button>
+
+            <p class="login-hint">Belum mau daftar? Coba dulu lewat <a href="#dashboard" id="login-demo-link">mode demo</a>.</p>
+        </div>
+    </div>
+
+    <!-- =========================================
+         HALAMAN APLIKASI (setelah login / demo)
+         Menu pilihan: Dashboard atau Marketplace
+    ========================================== -->
+    <div class="app-shell" id="app" hidden>
+
+        <header class="header app-topbar" id="app-topbar">
+            <div class="container navbar">
+
+                <a href="#app" class="logo">
+                    <img class="logo-icon" src="logo.svg" alt="Logo FEED-MATRIX">
+                    <span>FEED-<strong>MATRIX</strong></span>
+                </a>
+
+                <nav class="app-nav" aria-label="Menu aplikasi">
+                    <a href="#app" data-view="menu">Menu</a>
+                    <a href="#app/dashboard" data-view="dashboard">Dashboard</a>
+                    <a href="#app/marketplace" data-view="marketplace">Marketplace</a>
+                </nav>
+
+                <div class="app-user">
+                    <span id="userbar-text"></span>
+                    <a href="#home" class="btn btn-outline" id="app-home">Beranda</a>
+                    <button type="button" class="btn btn-outline" id="userbar-action"></button>
+                </div>
+
+            </div>
+        </header>
+
+        <!-- MENU PILIHAN -->
+        <div class="app-view" id="view-menu">
+            <section class="section app-menu">
+                <div class="container">
+
+                    <div class="section-heading">
+                        <span class="section-label">MENU UTAMA</span>
+                        <h2 id="menu-greeting">Selamat datang</h2>
+                        <p>Pilih fitur yang ingin Anda gunakan hari ini.</p>
+                    </div>
+
+                    <div class="menu-grid">
+
+                        <a href="#app/dashboard" class="menu-card" id="menu-dashboard">
+                            <div class="menu-icon">📊</div>
+                            <h3>Dashboard</h3>
+                            <p>Hitung pakan dan pantau kondisi kandang dalam satu tempat.</p>
+                            <ul class="menu-points">
+                                <li>Hitung deviasi, FCR, dan biaya pakan</li>
+                                <li>Live Kandang: suhu, kelembaban, amonia, CCTV</li>
+                                <li>Peringatan terintegrasi, grafik, dan riwayat</li>
+                            </ul>
+                            <span class="menu-cta">Buka Dashboard →</span>
+                        </a>
+
+                        <a href="#app/marketplace" class="menu-card" id="menu-marketplace">
+                            <div class="menu-icon">🛒</div>
+                            <h3>Marketplace</h3>
+                            <p>Jual hasil kandang dan beli pakan langsung, tanpa tengkulak.</p>
+                            <ul class="menu-points">
+                                <li>Beli pakan langsung dari supplier</li>
+                                <li>Jual ayam panen dan pupuk organik</li>
+                                <li>Pesanan dan listing milik Anda</li>
+                            </ul>
+                            <span class="menu-cta">Buka Marketplace →</span>
+                        </a>
+
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- DASHBOARD: HITUNG PAKAN + LIVE KANDANG -->
+        <div class="app-view" id="view-dashboard" hidden>
+            <!-- =========================================
+                 4. DASHBOARD UTAMA
+            ========================================== -->
+            <section class="section dashboard-section" id="dashboard">
+                <div class="container">
+
+                    <div class="dashboard-layout">
+
+                        <!-- FORM INPUT -->
+                        <aside class="panel input-panel" id="form-input">
+
+                            <div class="panel-header">
+                                <h3>Input Data Harian</h3>
+                                <p>Masukkan data monitoring kandang.</p>
+                            </div>
+
+                            <form id="feed-form">
+
+                                <div class="form-group">
+                                    <label for="tanggal">Tanggal</label>
+                                    <input
+                                        type="date"
+                                        id="tanggal"
+                                        name="tanggal"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="jumlah-ayam">
+                                        Jumlah Ayam (ekor)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="jumlah-ayam"
+                                        name="jumlahAyam"
+                                        min="1"
+                                        placeholder="Contoh: 10000"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="umur">Umur Ayam (hari)</label>
+                                    <input
+                                        type="number"
+                                        id="umur"
+                                        name="umur"
+                                        min="1"
+                                        placeholder="Contoh: 28"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="bobot">
+                                        Bobot Rata-rata (kg/ekor)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="bobot"
+                                        name="bobot"
+                                        min="0"
+                                        step="0.001"
+                                        placeholder="Contoh: 1.25"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="bobot-sebelumnya">
+                                        Bobot Rata-rata Sebelumnya (kg/ekor)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="bobot-sebelumnya"
+                                        name="bobotSebelumnya"
+                                        min="0"
+                                        step="0.001"
+                                        placeholder="Bobot pada pencatatan sebelumnya"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="rencana">
+                                        Rencana Pakan (kg)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="rencana"
+                                        name="rencana"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="Masukkan rencana"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="realisasi">
+                                        Realisasi Pakan (kg)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="realisasi"
+                                        name="realisasi"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="Masukkan realisasi"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="sisa">
+                                        Sisa Pakan Terukur (kg)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="sisa"
+                                        name="sisa"
+                                        min="0"
+                                        step="0.01"
+                                        value="0"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="harga">
+                                        Harga Pakan (Rp/kg)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="harga"
+                                        name="harga"
+                                        min="0"
+                                        step="1"
+                                        placeholder="Contoh: 8500"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-section-title">
+                                    📡 Live Kandang
+                                    <span>Kondisi lingkungan kandang saat pencatatan.</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="lokasi">Lokasi Kandang</label>
+                                    <input
+                                        type="text"
+                                        id="lokasi"
+                                        name="lokasi"
+                                        maxlength="80"
+                                        autocomplete="off"
+                                        placeholder="Contoh: Gowa, Sulawesi Selatan"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="suhu">Suhu Kandang (°C)</label>
+                                    <input
+                                        type="number"
+                                        id="suhu"
+                                        name="suhu"
+                                        min="0"
+                                        max="60"
+                                        step="0.1"
+                                        placeholder="Contoh: 29.5"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="kelembaban">Kelembaban (%)</label>
+                                    <input
+                                        type="number"
+                                        id="kelembaban"
+                                        name="kelembaban"
+                                        min="0"
+                                        max="100"
+                                        step="0.1"
+                                        placeholder="Contoh: 65"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="amonia">Kadar Amonia (ppm)</label>
+                                    <input
+                                        type="number"
+                                        id="amonia"
+                                        name="amonia"
+                                        min="0"
+                                        step="0.1"
+                                        placeholder="Contoh: 12"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="cctv">Status CCTV Live</label>
+                                    <select id="cctv" name="cctv">
+                                        <option value="aktif" selected>Aktif / Feed Ready</option>
+                                        <option value="offline">Tidak Aktif / Offline</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    Simpan Data
+                                </button>
+
+                                <button type="reset" class="btn btn-outline">
+                                    Reset Form
+                                </button>
+
+                            </form>
+
+                            <!-- HASIL KALKULASI -->
+                            <div class="calculation-panel">
+                                <h3>Hasil Perhitungan</h3>
+
+                                <div class="calculation-row">
+                                    <span>Konsumsi Pakan Bersih</span>
+                                    <strong id="hasil-konsumsi">— kg</strong>
+                                </div>
+
+                                <div class="calculation-row">
+                                    <span>Deviasi Absolut</span>
+                                    <strong id="hasil-deviasi">— kg</strong>
+                                </div>
+
+                                <div class="calculation-row">
+                                    <span>Deviasi Persentase</span>
+                                    <strong id="hasil-persentase">—%</strong>
+                                </div>
+
+                                <div class="calculation-row">
+                                    <span>Estimasi FCR</span>
+                                    <strong id="hasil-fcr">—</strong>
+                                </div>
+
+                                <div class="calculation-row">
+                                    <span>Estimasi Biaya Pakan</span>
+                                    <strong id="hasil-biaya">Rp —</strong>
+                                </div>
+
+                                <div class="calculation-row">
+                                    <span>Lokasi Kandang</span>
+                                    <strong id="hasil-lokasi">—</strong>
+                                </div>
+
+                                <div class="calculation-row">
+                                    <span>Suhu Kandang</span>
+                                    <strong id="hasil-suhu">— °C</strong>
+                                </div>
+
+                                <div class="calculation-row">
+                                    <span>Kelembaban</span>
+                                    <strong id="hasil-kelembaban">—%</strong>
+                                </div>
+
+                                <div class="calculation-row">
+                                    <span>Kadar Amonia</span>
+                                    <strong id="hasil-amonia">— ppm</strong>
+                                </div>
+
+                                <div class="calculation-row">
+                                    <span>Status Suhu</span>
+                                    <strong id="hasil-status-suhu">—</strong>
+                                </div>
+                            </div>
+
+                        </aside>
+
+
+                        <!-- AREA ANALITIK -->
+                        <div class="dashboard-content">
+
+                            <!-- KARTU STATISTIK -->
+                            <div class="stats-grid">
+
+                                <article class="stat-card">
+                                    <span>Total Biaya Pakan</span>
+                                    <h3 id="total-biaya">Rp —</h3>
+                                    <p>Akumulasi data tersimpan</p>
+                                </article>
+
+                                <article class="stat-card">
+                                    <span>FCR Kumulatif</span>
+                                    <h3 id="fcr-kumulatif">—</h3>
+                                    <p>Berdasarkan data biomassa</p>
+                                </article>
+
+                                <article class="stat-card">
+                                    <span>Deviasi Rata-rata</span>
+                                    <h3 id="deviasi-rata-rata">—%</h3>
+                                    <p>Periode pencatatan</p>
+                                </article>
+
+                                <article class="stat-card">
+                                    <span>Catatan Menyimpang</span>
+                                    <h3 id="jumlah-menyimpang">0</h3>
+                                    <p>Memerlukan evaluasi</p>
+                                </article>
+
+                                <article class="stat-card">
+                                    <span>Suhu Kandang Rata-rata (°C)</span>
+                                    <h3 id="suhu-rata-rata">— °C</h3>
+                                    <p id="suhu-keterangan">Batas aman ≤ 32 °C</p>
+                                </article>
+
+                                <article class="stat-card">
+                                    <span>Kadar Amonia (ppm)</span>
+                                    <h3 id="amonia-rata-rata">— ppm</h3>
+                                    <p id="amonia-keterangan">Rata-rata data tersimpan</p>
+                                </article>
+
+                            </div>
+
+
+                            <!-- LIVE KANDANG (FITUR BARU A) -->
+                            <section class="panel live-panel" id="live-kandang">
+
+                                <div class="panel-header live-header">
+                                    <div>
+                                        <h3>📹 Live Kandang</h3>
+                                        <p>Simulasi CCTV dan kondisi lingkungan kandang terakhir.</p>
+                                    </div>
+                                    <span class="live-badge" id="live-badge">STANDBY</span>
+                                </div>
+
+                                <div class="live-screen is-standby" id="live-screen" role="img" aria-label="Mockup tampilan CCTV kandang">
+                                    <div class="live-top">
+                                        <span class="live-rec"><i></i> REC</span>
+                                        <span>CAM-01 · KANDANG UTAMA</span>
+                                        <span id="live-clock">--/--/---- --:--:--</span>
+                                    </div>
+
+                                    <video
+                                        id="live-video"
+                                        class="live-media"
+                                        src="cctv-sample.mp4"
+                                        poster="cctv-sample.jpg"
+                                        autoplay
+                                        muted
+                                        loop
+                                        playsinline
+                                        preload="auto"
+                                    ></video>
+                                    <img
+                                        id="live-photo"
+                                        class="live-media"
+                                        src="cctv-sample.jpg"
+                                        alt="Contoh foto CCTV kandang"
+                                        hidden
+                                    >
+
+                                    <div class="live-floor" id="live-floor" aria-hidden="true"></div>
+
+                                    <div class="live-nosignal">
+                                        <strong>NO SIGNAL</strong>
+                                        <span id="live-nosignal-text">Belum ada data kandang</span>
+                                    </div>
+
+                                    <div class="live-bottom">
+                                        <span id="live-lokasi">📍 Lokasi belum diisi</span>
+                                    </div>
+                                </div>
+
+                                <div class="live-source" id="live-source">
+                                    <span>Tampilan:</span>
+                                    <button type="button" class="live-src-btn active" data-src="video">Video contoh</button>
+                                    <button type="button" class="live-src-btn" data-src="foto">Foto contoh</button>
+                                    <button type="button" class="live-src-btn" data-src="simulasi">Simulasi</button>
+                                    <label class="live-upload">
+                                        Unggah foto/video CCTV
+                                        <input type="file" id="live-file" accept="video/*,image/*" hidden>
+                                    </label>
+                                </div>
+
+                                <div class="live-metrics">
+                                    <div class="live-metric" id="live-m-suhu">
+                                        <span>Suhu</span>
+                                        <strong id="live-suhu">— °C</strong>
+                                    </div>
+                                    <div class="live-metric">
+                                        <span>Kelembaban</span>
+                                        <strong id="live-lembab">—%</strong>
+                                    </div>
+                                    <div class="live-metric">
+                                        <span>Amonia</span>
+                                        <strong id="live-amonia">— ppm</strong>
+                                    </div>
+                                </div>
+
+                                <p class="disclaimer">
+                                    Video dan foto contoh adalah ilustrasi, bukan siaran nyata. Anda bisa mengunggah
+                                    foto/video CCTV sendiri (hanya tampil di browser ini, tidak disimpan).
+                                    Untuk CCTV sungguhan, gunakan URL stream (HLS/MJPEG) dari kamera atau DVR.
+                                </p>
+
+                            </section>
+
+
+                            <!-- GRAFIK -->
+                            <section class="panel chart-panel" id="grafik">
+
+                                <div class="panel-header">
+                                    <h3>Tren Konsumsi Pakan & FCR</h3>
+                                    <p>
+                                        Perbandingan data harian
+                                        berdasarkan periode monitoring.
+                                    </p>
+                                </div>
+
+                                <div class="chart-canvas-wrap">
+                                    <canvas id="feedChart"></canvas>
+                                </div>
+
+                            </section>
+
+
+                            <!-- PERINGATAN -->
+                            <section class="panel alert-panel" id="peringatan">
+                                <div class="panel-header">
+                                    <h3>⚠️ Peringatan Sistem</h3>
+                                </div>
+
+                                <p id="pesan-peringatan" aria-live="polite">
+                                    Belum ada evaluasi data.
+                                    Masukkan data monitoring untuk memulai.
+                                </p>
+                            </section>
+
+
+                            <!-- TABEL RIWAYAT -->
+                            <section class="panel history-panel" id="riwayat">
+
+                                <div class="panel-header history-header">
+                                    <div>
+                                        <h3>Riwayat Monitoring</h3>
+                                        <p>Rekap pencatatan data kandang.</p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        id="export-csv"
+                                        class="btn btn-outline"
+                                    >
+                                        Export CSV
+                                    </button>
+                                </div>
+
+                                <div class="table-controls">
+                                    <label for="filter-tanggal">
+                                        Filter tanggal:
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="filter-tanggal"
+                                    >
+
+                                    <label for="ambang">Ambang deviasi (%):</label>
+                                    <input type="number" id="ambang" value="5" min="0.1" step="0.1">
+                                </div>
+
+                                <div class="table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Tanggal</th>
+                                                <th>Umur</th>
+                                                <th>Ekor</th>
+                                                <th>Lokasi</th>
+                                                <th>Suhu (°C)</th>
+                                                <th>Konsumsi Bersih (kg)</th>
+                                                <th>FCR</th>
+                                                <th>Deviasi (%)</th>
+                                                <th>Biaya (Rp)</th>
+                                                <th>Status</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody id="tabel-riwayat">
+                                            <tr>
+                                                <td colspan="11">
+                                                    Belum ada data monitoring.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                            </section>
+
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+        </div>
+
+        <!-- MARKETPLACE -->
+        <div class="app-view" id="view-marketplace" hidden>
+            <!-- =========================================
+                 4B. MARKETPLACE TERINTEGRASI (FITUR BARU C)
+            ========================================== -->
+            <section class="section marketplace-section" id="marketplace">
+                <div class="container">
+
+                    <div class="section-heading">
+                        <span class="section-label">FITUR BARU C</span>
+                        <h2>Marketplace Terintegrasi</h2>
+                        <p>
+                            Jual ayam panen dan pupuk organik dari kotoran,
+                            beli pakan langsung dari supplier. Direct to buyer,
+                            tanpa tengkulak.
+                        </p>
+                    </div>
+
+                    <div class="market-flow" aria-hidden="true">
+                        <span>🐔 Peternak</span>
+                        <i>→</i>
+                        <strong>FEED-MATRIX</strong>
+                        <i>→</i>
+                        <span>🛒 Pembeli</span>
+                        <em>Tanpa tengkulak</em>
+                    </div>
+
+                    <div class="panel market-panel">
+
+                        <div class="market-toolbar">
+                            <div class="market-tabs" id="market-tabs" role="tablist">
+                                <button type="button" class="market-tab active" data-cat="pakan" role="tab">🌾 Beli Pakan</button>
+                                <button type="button" class="market-tab" data-cat="ayam" role="tab">🐔 Jual Ayam Panen</button>
+                                <button type="button" class="market-tab" data-cat="pupuk" role="tab">🌱 Jual Pupuk Organik</button>
+                            </div>
+
+                            <input type="search" id="market-search" placeholder="Cari produk, penjual, atau lokasi…" aria-label="Cari listing marketplace">
+
+                            <button type="button" class="btn btn-primary" id="market-add">+ Pasang Listing</button>
+                        </div>
+
+                        <p class="market-info" id="market-info"></p>
+
+                        <div class="market-grid" id="market-grid"></div>
+
+                        <p class="disclaimer">
+                            Seluruh listing bertanda "Contoh" adalah data ilustrasi untuk prototipe.
+                            Harga, stok, dan pembanding harga tengkulak perlu diverifikasi
+                            sebelum transaksi nyata.
+                        </p>
+                    </div>
+
+                    <div class="panel market-orders" id="market-orders">
+                        <div class="panel-header">
+                            <h3>Pesanan Anda</h3>
+                            <p id="market-flash">Pesanan disimulasikan dan tersimpan di browser ini.</p>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Produk</th>
+                                        <th>Penjual</th>
+                                        <th>Jumlah</th>
+                                        <th>Total (Rp)</th>
+                                        <th>Hemat vs Tengkulak</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabel-pesanan">
+                                    <tr><td colspan="8">Belum ada pesanan.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+
+            <!-- DIALOG: PESAN LANGSUNG -->
+            <dialog class="market-dialog" id="order-dialog" aria-labelledby="order-title">
+                <form id="order-form" novalidate>
+                    <h3 id="order-title">Pesan Langsung</h3>
+                    <p class="market-dialog-meta" id="order-meta"></p>
+
+                    <div class="form-group">
+                        <label for="order-nama">Nama Pembeli</label>
+                        <input type="text" id="order-nama" maxlength="60" placeholder="Nama Anda / usaha Anda" autocomplete="name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-wa">WhatsApp Anda</label>
+                        <input type="tel" id="order-wa" maxlength="16" placeholder="Contoh: 081234567890" autocomplete="tel">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-jumlah" id="order-jumlah-label">Jumlah (kg)</label>
+                        <input type="number" id="order-jumlah" min="1" step="1" placeholder="Jumlah pesanan">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-catatan">Catatan (opsional)</label>
+                        <input type="text" id="order-catatan" maxlength="120" placeholder="Contoh: kirim hari Jumat pagi">
+                    </div>
+
+                    <div class="market-summary">
+                        <div class="calculation-row"><span>Total Harga</span><strong id="order-total">Rp —</strong></div>
+                        <div class="calculation-row"><span>Hemat vs tengkulak</span><strong id="order-hemat">—</strong></div>
+                    </div>
+
+                    <p class="market-dialog-meta" id="order-send-note"></p>
+
+                    <p class="login-error" id="order-error" role="alert" hidden></p>
+
+                    <div class="market-dialog-actions">
+                        <button type="button" class="btn btn-outline" data-close="order-dialog">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="order-submit">Kirim Pesanan</button>
+                    </div>
+                </form>
+            </dialog>
+
+            <!-- DIALOG: PASANG LISTING -->
+            <dialog class="market-dialog" id="listing-dialog" aria-labelledby="listing-title">
+                <form id="listing-form" novalidate>
+                    <h3 id="listing-title">Pasang Listing</h3>
+                    <p class="market-dialog-meta" id="listing-hint">Jual hasil kandang Anda langsung ke pembeli.</p>
+
+                    <div class="form-group">
+                        <label for="lst-kat">Jenis</label>
+                        <select id="lst-kat">
+                            <option value="ayam">Ayam Panen</option>
+                            <option value="pupuk">Pupuk Organik</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lst-nama">Nama Produk</label>
+                        <input type="text" id="lst-nama" maxlength="80" placeholder="Contoh: Ayam Broiler Panen, umur 33 hari">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lst-lokasi">Lokasi</label>
+                        <input type="text" id="lst-lokasi" maxlength="60" placeholder="Contoh: Gowa, Sulawesi Selatan">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lst-jumlah">Jumlah Tersedia (kg)</label>
+                        <input type="number" id="lst-jumlah" min="1" step="1" placeholder="Contoh: 1500">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lst-harga">Harga (Rp/kg)</label>
+                        <input type="number" id="lst-harga" min="1" step="1" placeholder="Contoh: 21000">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lst-kontak">WhatsApp (opsional)</label>
+                        <input type="tel" id="lst-kontak" maxlength="16" placeholder="Format 628xxxxxxxxxx">
+                    </div>
+
+                    <p class="login-error" id="listing-error" role="alert" hidden></p>
+
+                    <div class="market-dialog-actions">
+                        <button type="button" class="btn btn-outline" data-close="listing-dialog">Batal</button>
+                        <button type="submit" class="btn btn-primary">Pasang Listing</button>
+                    </div>
+                </form>
+            </dialog>
+
+
+        </div>
+
+    </div>
+
+
+    <main>
+
+        <!-- =========================================
+             2. HERO SECTION
+        ========================================== -->
+        <section class="hero section" id="home">
+            <div class="container hero-grid">
+
+                <div class="hero-content">
+                    <span class="badge">
+                        Precision Poultry Feed Analytics
+                    </span>
+
+                    <h1>
+                        Sistem Presisi Monitoring &
+                        <span>Optimasi Pakan Broiler</span>
+                    </h1>
+
+                    <p>
+                        Deteksi deviasi konsumsi pakan, evaluasi
+                        Feed Conversion Ratio (FCR), dan analisis
+                        biaya operasional kandang melalui satu
+                        dashboard terintegrasi.
+                    </p>
+
+                    <div class="hero-actions">
+                        <a href="#form-input" class="btn btn-primary">
+                            Input Data Hari Ini
+                        </a>
+
+                        <a href="#riwayat" class="btn btn-outline">
+                            Lihat Riwayat Monitoring
+                        </a>
+                    </div>
+
+                    <div class="hero-highlights">
+                        <span>✓ Analisis Data Harian</span>
+                        <span>✓ Monitoring Deviasi</span>
+                        <span>✓ Visualisasi Data</span>
+                    </div>
+                </div>
+
+                <div class="hero-visual">
+                    <!-- Ilustrasi dashboard akan ditambahkan nanti -->
+                    <div class="hero-placeholder">
+                        <div class="placeholder-icon">📊</div>
+                        <h3>FEED-MATRIX Analytics</h3>
+                        <p>
+                            Visualisasi konsumsi pakan,
+                            FCR, dan efisiensi operasional.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- =========================================
+             3. FITUR UTAMA
+        ========================================== -->
+        <section class="section features" id="fitur">
+            <div class="container">
+
+                <div class="section-heading">
+                    <span class="section-label">FITUR UTAMA</span>
+                    <h2>Monitoring Pakan Lebih Terukur</h2>
+                    <p>
+                        Perangkat analitik untuk membantu
+                        mengevaluasi performa konsumsi pakan broiler.
+                    </p>
+                </div>
+
+                <div class="feature-grid">
+
+                    <article class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Deteksi Varians Absolut</h3>
+                        <p>
+                            Membandingkan konsumsi aktual dengan
+                            rencana pakan untuk mendeteksi
+                            penyimpangan.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon">🐔</div>
+                        <h3>Kalkulasi FCR & Biomassa</h3>
+                        <p>
+                            Mengevaluasi hubungan konsumsi pakan
+                            dengan pertambahan biomassa ayam.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon">📈</div>
+                        <h3>Analytics & Export CSV</h3>
+                        <p>
+                            Memvisualisasikan tren data harian
+                            dan menyiapkan rekap untuk analisis.
+                        </p>
+                    </article>
+
+                    <article class="feature-card">
+                        <div class="feature-icon">📡</div>
+                        <h3>Integrasi Industri</h3>
+                        <p>
+                            Menyiapkan struktur pengembangan
+                            untuk sensor IoT dan data peternakan.
+                        </p>
+                    </article>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- =========================================
+             5. EDUKASI KONSUMSI PAKAN
+        ========================================== -->
+        <section class="section education-section" id="edukasi">
+            <div class="container">
+
+                <div class="section-heading">
+                    <span class="section-label">PUSAT EDUKASI</span>
+                    <h2>Standar Kurva Konsumsi Pakan Broiler</h2>
+                    <p>
+                        Pelajari perkembangan konsumsi pakan
+                        berdasarkan umur dan fase pertumbuhan.
+                    </p>
+                </div>
+
+                <div class="education-grid">
+
+                    <article class="panel education-card">
+                        <h3>Kurva Konsumsi Pakan</h3>
+
+                        <div class="chart-canvas-wrap">
+                            <canvas id="eduChart"></canvas>
+                        </div>
+                    </article>
+
+                    <article class="panel education-card">
+                        <h3>Fase Pertumbuhan Broiler</h3>
+
+                        <div class="education-item">
+                            <h4>Starter</h4>
+                            <p>
+                                Fase awal pertumbuhan. Acuan umur
+                                dan kebutuhan pakan harus mengikuti
+                                panduan strain yang digunakan.
+                            </p>
+                        </div>
+
+                        <div class="education-item">
+                            <h4>Finisher</h4>
+                            <p>
+                                Fase pertumbuhan lanjutan menuju
+                                bobot panen sesuai target pemeliharaan.
+                            </p>
+                        </div>
+
+                        <a href="#faq" class="btn btn-outline">
+                            Pelajari Metodologi
+                        </a>
+                    </article>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- =========================================
+             6. DIREKTORI SUPPLIER
+        ========================================== -->
+        <section class="section supplier-section" id="supplier">
+            <div class="container">
+
+                <div class="section-heading">
+                    <span class="section-label">DIREKTORI PAKAN</span>
+                    <h2>Referensi Supplier Pakan</h2>
+                    <p>
+                        Direktori untuk membantu membandingkan
+                        informasi produk dan harga pakan.
+                    </p>
+                </div>
+
+                <div class="panel supplier-panel">
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nama Supplier</th>
+                                    <th>Lokasi</th>
+                                    <th>Produk</th>
+                                    <th>Harga Referensi (Rp/kg)</th>
+                                    <th>Kontak</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="tabel-supplier">
+                                <tr>
+                                    <td colspan="5">
+                                        Data supplier belum ditambahkan.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="disclaimer">
+                        Harga, ketersediaan, dan informasi supplier
+                        perlu diverifikasi sebelum digunakan.
+                    </p>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- =========================================
+             7. FAQ DAN METODOLOGI
+        ========================================== -->
+        <section class="section faq-section" id="faq">
+            <div class="container">
+
+                <div class="section-heading">
+                    <span class="section-label">INFORMASI SISTEM</span>
+                    <h2>Pertanyaan Umum</h2>
+                </div>
+
+                <div class="faq-list">
+
+                    <details class="faq-item">
+                        <summary>Apa itu FEED-MATRIX?</summary>
+                        <p>
+                            FEED-MATRIX adalah prototipe sistem
+                            monitoring untuk mencatat konsumsi
+                            pakan, mengevaluasi deviasi, dan
+                            menganalisis efisiensi pakan broiler.
+                        </p>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>
+                            Bagaimana sistem menghitung FCR?
+                        </summary>
+                        <p>
+                            FCR dihitung dari konsumsi pakan
+                            dibagi pertambahan biomassa dalam
+                            periode yang sama dan berdasarkan
+                            definisi data yang konsisten.
+                        </p>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>
+                            Apakah data sistem sudah tersimpan online?
+                        </summary>
+                        <p>
+                            Belum. Versi awal direncanakan menggunakan
+                            penyimpanan browser. Sinkronisasi online
+                            memerlukan backend dan database.
+                        </p>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>
+                            Apakah hasil analisis menggantikan
+                            evaluasi peternak?
+                        </summary>
+                        <p>
+                            Tidak. Hasil analisis berfungsi sebagai
+                            alat bantu monitoring dan perlu ditinjau
+                            bersama kondisi kandang serta data aktual.
+                        </p>
+                    </details>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- =========================================
+         8. FOOTER
+    ========================================== -->
+    <footer class="footer">
+        <div class="container footer-grid">
+
+            <div class="footer-brand">
+                <a href="#home" class="logo">
+                    <img class="logo-icon" src="logo.svg" alt="Logo FEED-MATRIX"> FEED-<strong>MATRIX</strong>
+                </a>
+
+                <p>
+                    Sistem presisi monitoring dan optimasi
+                    pakan broiler berbasis analitik.
+                </p>
+
+                <p>
+                    Membantu pencatatan lebih terstruktur
+                    dan evaluasi operasional lebih terukur.
+                </p>
+            </div>
+
+            <div class="footer-links">
+                <h3>Navigasi</h3>
+                <a href="#home">Home</a>
+                <a href="#fitur">Fitur Utama</a>
+                <a href="#dashboard">Dashboard</a>
+                <a href="#marketplace">Marketplace</a>
+                <a href="#edukasi">Edukasi</a>
+                <a href="#supplier">Direktori Pakan</a>
+            </div>
+
+            <div class="footer-links">
+                <h3>Dokumentasi</h3>
+                <a href="#faq">Panduan Pengguna</a>
+                <a href="#faq">Metodologi Perhitungan</a>
+                <a href="#faq">Informasi Sistem</a>
+            </div>
+
+            <div class="footer-links">
+                <h3>Informasi Proyek</h3>
+                <p>FEED-MATRIX v2.0</p>
+                <p>Analytical Edition</p>
+                <p>Kontak: 088245176557</p>
+            </div>
+
+        </div>
+
+        <div class="container footer-bottom">
+            <p>
+                &copy; <span id="tahun-footer">2026</span>
+                FEED-MATRIX. Proyek demonstrasi.
+            </p>
+
+            <a href="#home">Kembali ke atas ↑</a>
+        </div>
+    </footer>
+
+
+    <!-- JavaScript -->
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+
+
+</body>
+</html>
