@@ -68,7 +68,6 @@
                 <span>FEED-<strong>MATRIX</strong></span>
             </a>
 
-            <h2 id="login-title">Login Penjual</h2>
             <p class="login-sub" id="login-sub">Khusus penjual dan peternak untuk mengelola dashboard, listing, dan pesanan. Pembeli di marketplace tidak perlu login.</p>
 
             <div class="login-tabs" role="tablist">
@@ -176,7 +175,7 @@
                             <ul class="menu-points">
                                 <li>Notifikasi saat ada pembeli memesan</li>
                                 <li>Setujui atau tolak pesanan dengan satu klik</li>
-                                <li>Pasang listing ayam panen dan pupuk organik</li>
+                                <li>Pasang listing pakan, telur, dan ayam panen</li>
                             </ul>
                             <span class="menu-cta">Buka Toko Saya →</span>
                         </a>
@@ -757,15 +756,33 @@
 
                     <div class="form-group">
                         <label for="lst-kat">Jenis</label>
-                        <select id="lst-kat">
-                            <option value="ayam">Ayam Panen</option>
-                            <option value="pupuk">Pupuk Organik</option>
+                        <select id="lst-kat" required>
+                            <option value="">— Pilih jenis produk —</option>
+                            <option value="pakan">🌾 Pakan</option>
+                            <option value="telur">🥚 Telur</option>
+                            <option value="ayam">🐔 Ayam</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label for="lst-nama">Nama Produk</label>
-                        <input type="text" id="lst-nama" maxlength="80" placeholder="Contoh: Ayam Broiler Panen, umur 33 hari">
+                        <input type="text" id="lst-nama" maxlength="80" placeholder="Contoh: Telur Ayam Ras Cokelat, grade A">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lst-foto">Foto Produk <span class="req">wajib</span></label>
+                        <label class="photo-drop" for="lst-foto" id="lst-foto-drop">
+                            <span id="lst-foto-text">📷 Pilih atau ambil foto produk</span>
+                            <img id="lst-foto-preview" alt="Pratinjau foto produk" hidden>
+                        </label>
+                        <input type="file" id="lst-foto" accept="image/*" hidden>
+                        <small class="field-hint">JPG, PNG, atau WebP. Foto otomatis dikecilkan agar muat di penyimpanan browser.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lst-deskripsi">Deskripsi Produk <span class="req">wajib</span></label>
+                        <textarea id="lst-deskripsi" rows="4" maxlength="600" placeholder="Ceritakan kualitas, ukuran/kemasan, kondisi stok, dan cara pengambilan atau pengiriman."></textarea>
+                        <small class="field-hint"><span id="lst-desc-count">0</span>/600 karakter (minimal 20)</small>
                     </div>
 
                     <div class="form-group">
@@ -844,7 +861,7 @@
                         <li>Masuk lewat <em>Login Penjual</em>, atau coba dulu dengan <em>Coba Demo</em>.</li>
                         <li>Isi <em>Input Data Harian</em>, lalu tekan Simpan Data.</li>
                         <li>Baca hasil perhitungan, grafik, dan peringatan sistem.</li>
-                        <li>Di <em>Toko Saya</em>, pasang listing ayam panen atau pupuk, lalu setujui atau tolak pesanan yang masuk.</li>
+                        <li>Di <em>Toko Saya</em>, pasang listing pakan, telur, atau ayam panen lengkap dengan foto dan deskripsi, lalu setujui atau tolak pesanan yang masuk.</li>
                     </ol>
                 </article>
                 <article class="panel method-card">
@@ -1049,8 +1066,8 @@
                     <div class="market-toolbar">
                         <div class="market-tabs" id="market-tabs" role="tablist">
                             <button type="button" class="market-tab active" data-cat="pakan" role="tab">🌾 Pakan</button>
+                            <button type="button" class="market-tab" data-cat="telur" role="tab">🥚 Telur</button>
                             <button type="button" class="market-tab" data-cat="ayam" role="tab">🐔 Ayam Panen</button>
-                            <button type="button" class="market-tab" data-cat="pupuk" role="tab">🌱 Pupuk Organik</button>
                         </div>
 
                         <input type="search" id="market-search" placeholder="Cari produk, penjual, atau lokasi…" aria-label="Cari listing marketplace">
@@ -1353,6 +1370,39 @@
         </div>
     </footer>
 
+
+    <!-- DIALOG: DETAIL PRODUK (tampilan besar foto + deskripsi) -->
+    <dialog class="market-dialog product-dialog" id="product-dialog" aria-labelledby="pd-title">
+        <button type="button" class="pd-close" data-close="product-dialog" aria-label="Tutup detail produk">✕</button>
+        <div class="pd-body">
+            <div class="pd-media" id="pd-media"></div>
+
+            <div class="pd-info">
+                <div class="market-badges pd-badges" id="pd-badges"></div>
+                <h3 id="pd-title"></h3>
+                <p class="pd-seller" id="pd-seller"></p>
+
+                <div class="pd-price" id="pd-price"></div>
+                <div class="market-old" id="pd-old"></div>
+
+                <dl class="pd-facts">
+                    <div><dt>Jenis</dt><dd id="pd-jenis"></dd></div>
+                    <div><dt>Lokasi</dt><dd id="pd-lokasi"></dd></div>
+                    <div><dt>Stok</dt><dd id="pd-stok"></dd></div>
+                    <div><dt>Min. order</dt><dd id="pd-min"></dd></div>
+                </dl>
+
+                <h4 class="pd-sub">Deskripsi</h4>
+                <p class="pd-desc" id="pd-desc"></p>
+                <p class="pd-note" id="pd-note"></p>
+
+                <div class="pd-actions">
+                    <button type="button" class="btn btn-outline" data-close="product-dialog">Tutup</button>
+                    <button type="button" class="btn btn-primary" id="pd-order">Pesan Langsung</button>
+                </div>
+            </div>
+        </div>
+    </dialog>
 
     <!-- Notifikasi pesanan baru (penjual) -->
     <div class="order-toast" id="toast" role="status" aria-live="polite" hidden>
