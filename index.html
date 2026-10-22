@@ -8,6 +8,7 @@
 
     <!-- File CSS akan dibuat pada Tahap 2 -->
     <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <script>try{var t=localStorage.getItem("fm-theme");if(!t&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -24,17 +25,18 @@
                 <span>FEED-<strong>MATRIX</strong></span>
             </a>
 
-            <nav class="nav-menu" aria-label="Navigasi utama">
+            <nav class="nav-menu" id="nav-menu" aria-label="Navigasi utama">
                 <a href="#home">Home</a>
                 <a href="#fitur">Fitur Utama</a>
                 <a href="#dashboard">Dashboard</a>
                 <a href="#marketplace">Marketplace</a>
                 <a href="#edukasi">Edukasi</a>
-                <a href="#supplier">Direktori Pakan</a>
                 <a href="#faq">FAQ</a>
             </nav>
 
             <div class="nav-actions">
+                <button type="button" class="btn btn-outline theme-toggle" aria-label="Ganti mode gelap atau terang" title="Mode gelap / terang">🌙</button>
+
                 <a href="#login" class="btn btn-outline" id="btn-login">
                     Login
                 </a>
@@ -43,6 +45,8 @@
                     Coba Demo
                 </a>
             </div>
+
+            <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Buka menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
 
         </div>
     </header>
@@ -64,8 +68,8 @@
                 <span>FEED-<strong>MATRIX</strong></span>
             </a>
 
-            <h2 id="login-title">Masuk ke Dashboard</h2>
-            <p class="login-sub" id="login-sub">Masuk untuk mengakses dashboard monitoring pakan.</p>
+            <h2 id="login-title">Login Penjual</h2>
+            <p class="login-sub" id="login-sub">Khusus penjual dan peternak untuk mengelola dashboard, listing, dan pesanan. Pembeli di marketplace tidak perlu login.</p>
 
             <div class="login-tabs" role="tablist">
                 <button type="button" class="login-tab active" id="tab-masuk" data-mode="masuk" role="tab">Masuk</button>
@@ -125,12 +129,15 @@
                 <nav class="app-nav" aria-label="Menu aplikasi">
                     <a href="#app" data-view="menu">Menu</a>
                     <a href="#app/dashboard" data-view="dashboard">Dashboard</a>
-                    <a href="#app/marketplace" data-view="marketplace">Marketplace</a>
+                    <a href="#app/marketplace" data-view="marketplace">Toko Saya <span class="nav-badge" id="nav-badge" hidden>0</span></a>
+                    <a href="#marketplace" class="nav-ext">Lihat Marketplace ↗</a>
                 </nav>
 
                 <div class="app-user">
                     <span id="userbar-text"></span>
                     <a href="#home" class="btn btn-outline" id="app-home">Beranda</a>
+                    <button type="button" class="btn btn-outline theme-toggle" aria-label="Ganti mode gelap atau terang" title="Mode gelap / terang">🌙</button>
+                    <button type="button" class="btn btn-outline" id="demo-exit" hidden>Keluar Demo</button>
                     <button type="button" class="btn btn-outline" id="userbar-action"></button>
                 </div>
 
@@ -164,14 +171,14 @@
 
                         <a href="#app/marketplace" class="menu-card" id="menu-marketplace">
                             <div class="menu-icon">🛒</div>
-                            <h3>Marketplace</h3>
-                            <p>Jual hasil kandang dan beli pakan langsung, tanpa tengkulak.</p>
+                            <h3>Toko Saya <span class="menu-badge" id="menu-badge" hidden>0</span></h3>
+                            <p>Jual hasil kandang dan setujui pesanan pembeli yang masuk.</p>
                             <ul class="menu-points">
-                                <li>Beli pakan langsung dari supplier</li>
-                                <li>Jual ayam panen dan pupuk organik</li>
-                                <li>Pesanan dan listing milik Anda</li>
+                                <li>Notifikasi saat ada pembeli memesan</li>
+                                <li>Setujui atau tolak pesanan dengan satu klik</li>
+                                <li>Pasang listing ayam panen dan pupuk organik</li>
                             </ul>
-                            <span class="menu-cta">Buka Marketplace →</span>
+                            <span class="menu-cta">Buka Toko Saya →</span>
                         </a>
 
                     </div>
@@ -686,130 +693,61 @@
 
         </div>
 
-        <!-- MARKETPLACE -->
+        <!-- TOKO SAYA (khusus penjual yang login) -->
         <div class="app-view" id="view-marketplace" hidden>
-            <!-- =========================================
-                 4B. MARKETPLACE TERINTEGRASI (FITUR BARU C)
-            ========================================== -->
-            <section class="section marketplace-section" id="marketplace">
+            <section class="section marketplace-section seller-section" id="seller-panel">
                 <div class="container">
 
                     <div class="section-heading">
-                        <span class="section-label">FITUR BARU C</span>
-                        <h2>Marketplace Terintegrasi</h2>
+                        <span class="section-label">TOKO SAYA</span>
+                        <h2>Pesanan Masuk &amp; Listing Anda</h2>
                         <p>
-                            Jual ayam panen dan pupuk organik dari kotoran,
-                            beli pakan langsung dari supplier. Direct to buyer,
-                            tanpa tengkulak.
+                            Pembeli memesan tanpa login. Setiap pesanan masuk ke sini sebagai
+                            notifikasi dan baru diproses setelah Anda menyetujuinya.
                         </p>
                     </div>
 
-                    <div class="market-flow" aria-hidden="true">
-                        <span>🐔 Peternak</span>
-                        <i>→</i>
-                        <strong>FEED-MATRIX</strong>
-                        <i>→</i>
-                        <span>🛒 Pembeli</span>
-                        <em>Tanpa tengkulak</em>
-                    </div>
-
-                    <div class="panel market-panel">
-
-                        <div class="market-toolbar">
-                            <div class="market-tabs" id="market-tabs" role="tablist">
-                                <button type="button" class="market-tab active" data-cat="pakan" role="tab">🌾 Beli Pakan</button>
-                                <button type="button" class="market-tab" data-cat="ayam" role="tab">🐔 Jual Ayam Panen</button>
-                                <button type="button" class="market-tab" data-cat="pupuk" role="tab">🌱 Jual Pupuk Organik</button>
-                            </div>
-
-                            <input type="search" id="market-search" placeholder="Cari produk, penjual, atau lokasi…" aria-label="Cari listing marketplace">
-
-                            <button type="button" class="btn btn-primary" id="market-add">+ Pasang Listing</button>
-                        </div>
-
-                        <p class="market-info" id="market-info"></p>
-
-                        <div class="market-grid" id="market-grid"></div>
-
-                        <p class="disclaimer">
-                            Seluruh listing bertanda "Contoh" adalah data ilustrasi untuk prototipe.
-                            Harga, stok, dan pembanding harga tengkulak perlu diverifikasi
-                            sebelum transaksi nyata.
-                        </p>
-                    </div>
-
-                    <div class="panel market-orders" id="market-orders">
+                    <div class="panel seller-orders" id="seller-orders">
                         <div class="panel-header">
-                            <h3>Pesanan Anda</h3>
-                            <p id="market-flash">Pesanan disimulasikan dan tersimpan di browser ini.</p>
+                            <h3>🔔 Pesanan Masuk <span class="pending-pill" id="seller-pending" hidden></span></h3>
+                            <p id="seller-flash" aria-live="polite">Pesanan dari pembeli akan muncul di sini.</p>
                         </div>
 
                         <div class="table-wrapper">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Tanggal</th>
+                                        <th>Tanggal / Kode</th>
+                                        <th>Pembeli</th>
                                         <th>Produk</th>
-                                        <th>Penjual</th>
                                         <th>Jumlah</th>
                                         <th>Total (Rp)</th>
-                                        <th>Hemat vs Tengkulak</th>
                                         <th>Status</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tabel-pesanan">
-                                    <tr><td colspan="8">Belum ada pesanan.</td></tr>
+                                <tbody id="tabel-pesanan-masuk">
+                                    <tr><td colspan="7">Belum ada pesanan masuk.</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
+                    <div class="panel market-panel seller-listings">
+                        <div class="market-toolbar seller-toolbar">
+                            <div class="panel-header">
+                                <h3>Listing Saya</h3>
+                                <p>Produk yang tampil di marketplace publik.</p>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="seller-add">+ Pasang Listing</button>
+                        </div>
+
+                        <div class="market-grid" id="seller-grid"></div>
+                    </div>
+
                 </div>
             </section>
 
-
-            <!-- DIALOG: PESAN LANGSUNG -->
-            <dialog class="market-dialog" id="order-dialog" aria-labelledby="order-title">
-                <form id="order-form" novalidate>
-                    <h3 id="order-title">Pesan Langsung</h3>
-                    <p class="market-dialog-meta" id="order-meta"></p>
-
-                    <div class="form-group">
-                        <label for="order-nama">Nama Pembeli</label>
-                        <input type="text" id="order-nama" maxlength="60" placeholder="Nama Anda / usaha Anda" autocomplete="name">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="order-wa">WhatsApp Anda</label>
-                        <input type="tel" id="order-wa" maxlength="16" placeholder="Contoh: 081234567890" autocomplete="tel">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="order-jumlah" id="order-jumlah-label">Jumlah (kg)</label>
-                        <input type="number" id="order-jumlah" min="1" step="1" placeholder="Jumlah pesanan">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="order-catatan">Catatan (opsional)</label>
-                        <input type="text" id="order-catatan" maxlength="120" placeholder="Contoh: kirim hari Jumat pagi">
-                    </div>
-
-                    <div class="market-summary">
-                        <div class="calculation-row"><span>Total Harga</span><strong id="order-total">Rp —</strong></div>
-                        <div class="calculation-row"><span>Hemat vs tengkulak</span><strong id="order-hemat">—</strong></div>
-                    </div>
-
-                    <p class="market-dialog-meta" id="order-send-note"></p>
-
-                    <p class="login-error" id="order-error" role="alert" hidden></p>
-
-                    <div class="market-dialog-actions">
-                        <button type="button" class="btn btn-outline" data-close="order-dialog">Batal</button>
-                        <button type="submit" class="btn btn-primary" id="order-submit">Kirim Pesanan</button>
-                    </div>
-                </form>
-            </dialog>
 
             <!-- DIALOG: PASANG LISTING -->
             <dialog class="market-dialog" id="listing-dialog" aria-labelledby="listing-title">
@@ -846,8 +784,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="lst-kontak">WhatsApp (opsional)</label>
-                        <input type="tel" id="lst-kontak" maxlength="16" placeholder="Format 628xxxxxxxxxx">
+                        <label for="lst-kontak">WhatsApp Anda (opsional)</label>
+                        <input type="tel" id="lst-kontak" maxlength="16" placeholder="Contoh: 081234567890">
+                        <small class="field-hint">Dipakai pembeli menghubungi Anda setelah pesanan disetujui.</small>
                     </div>
 
                     <p class="login-error" id="listing-error" role="alert" hidden></p>
@@ -859,9 +798,97 @@
                 </form>
             </dialog>
 
-
         </div>
 
+    </div>
+
+
+    <!-- =========================================
+         HALAMAN METODOLOGI (untuk peternak & pembeli)
+    ========================================== -->
+    <div class="method-page" id="method-page" hidden role="dialog" aria-modal="true" aria-labelledby="method-title">
+        <div class="method-bar">
+            <div class="container method-bar-inner">
+                <a href="#edukasi" class="logo" id="method-close">
+                    <img class="logo-icon" src="logo.svg" alt="">
+                    <span>FEED-<strong>MATRIX</strong></span>
+                </a>
+                <a href="#edukasi" class="btn btn-outline" id="method-back">← Kembali</a>
+            </div>
+        </div>
+
+        <div class="container method-body">
+            <span class="section-label">METODOLOGI</span>
+            <h1 id="method-title">Cara Kerja FEED-MATRIX</h1>
+            <p class="method-lead">Pilih panduan sesuai peran Anda.</p>
+
+            <div class="method-tabs" role="tablist">
+                <button type="button" class="method-tab active" data-who="peternak" role="tab" aria-selected="true">🐔 Untuk Peternak</button>
+                <button type="button" class="method-tab" data-who="pembeli" role="tab" aria-selected="false">🛒 Untuk Pembeli</button>
+            </div>
+
+            <div class="method-panel" id="method-peternak" role="tabpanel">
+                <article class="panel method-card">
+                    <h3>Rumus yang dipakai</h3>
+                    <ul>
+                        <li><strong>Konsumsi bersih</strong> = realisasi pakan − sisa pakan terukur</li>
+                        <li><strong>Deviasi</strong> = konsumsi bersih − rencana pakan (kg dan %)</li>
+                        <li><strong>Pertambahan biomassa</strong> = jumlah ayam × (bobot − bobot sebelumnya)</li>
+                        <li><strong>FCR</strong> = konsumsi bersih ÷ pertambahan biomassa</li>
+                        <li><strong>Biaya pakan</strong> = konsumsi bersih × harga per kg</li>
+                    </ul>
+                </article>
+                <article class="panel method-card">
+                    <h3>Langkah memakai</h3>
+                    <ol>
+                        <li>Masuk lewat <em>Login Penjual</em>, atau coba dulu dengan <em>Coba Demo</em>.</li>
+                        <li>Isi <em>Input Data Harian</em>, lalu tekan Simpan Data.</li>
+                        <li>Baca hasil perhitungan, grafik, dan peringatan sistem.</li>
+                        <li>Di <em>Toko Saya</em>, pasang listing ayam panen atau pupuk, lalu setujui atau tolak pesanan yang masuk.</li>
+                    </ol>
+                </article>
+                <article class="panel method-card">
+                    <h3>Batas dan peringatan</h3>
+                    <ul>
+                        <li>Data dianggap menyimpang jika deviasi melewati ambang (bawaan 5%, bisa diubah di Riwayat Monitoring).</li>
+                        <li>Suhu kandang di atas 32 °C ditandai sebagai peringatan.</li>
+                        <li>FCR tidak dihitung jika bobot tidak bertambah dari catatan sebelumnya.</li>
+                        <li>Data masih tersimpan di browser. Gunakan Export CSV untuk cadangan.</li>
+                        <li>Hasil analisis adalah alat bantu, bukan pengganti evaluasi langsung di kandang.</li>
+                    </ul>
+                </article>
+                <a href="#dashboard" class="btn btn-primary method-cta">Buka Dashboard</a>
+            </div>
+
+            <div class="method-panel" id="method-pembeli" role="tabpanel" hidden>
+                <article class="panel method-card">
+                    <h3>Langkah memesan</h3>
+                    <ol>
+                        <li>Buka Marketplace, pilih kategori, lalu cari produk, penjual, atau lokasi.</li>
+                        <li>Tekan <em>Pesan</em>, isi nama, WhatsApp, jumlah, dan buat PIN 4–6 angka.</li>
+                        <li>Simpan kode pesanan dan PIN Anda. PIN tidak bisa dilihat lagi.</li>
+                        <li>Tunggu penjual menyetujui. Setelah disetujui, tombol <em>Hubungi Penjual</em> muncul.</li>
+                    </ol>
+                </article>
+                <article class="panel method-card">
+                    <h3>Keamanan pesanan</h3>
+                    <ul>
+                        <li>Pembeli tidak perlu login. PIN buatan Anda menjadi kuncinya.</li>
+                        <li>Membatalkan pesanan wajib PIN. Salah PIN 5 kali, pesanan terkunci 5 menit.</li>
+                        <li>Di perangkat bersama, tekan <em>Sembunyikan &amp; Kunci Daftar</em>. Pesanan tetap tersimpan dan bisa dibuka lagi dengan kode + PIN.</li>
+                    </ul>
+                </article>
+                <article class="panel method-card">
+                    <h3>Yang perlu diketahui</h3>
+                    <ul>
+                        <li>"Hemat vs tengkulak" adalah perbandingan perkiraan, bukan jaminan harga.</li>
+                        <li>Listing bertanda "Contoh" hanyalah ilustrasi dan tidak diteruskan ke penjual.</li>
+                        <li>Verifikasi harga dan stok sebelum transaksi nyata.</li>
+                    </ul>
+                </article>
+                <a href="#marketplace" class="btn btn-primary method-cta">Buka Marketplace</a>
+            </div>
+        </div>
     </div>
 
 
@@ -908,14 +935,25 @@
                 </div>
 
                 <div class="hero-visual">
-                    <!-- Ilustrasi dashboard akan ditambahkan nanti -->
-                    <div class="hero-placeholder">
-                        <div class="placeholder-icon">📊</div>
-                        <h3>FEED-MATRIX Analytics</h3>
-                        <p>
-                            Visualisasi konsumsi pakan,
-                            FCR, dan efisiensi operasional.
-                        </p>
+                        <div class="slider" id="slider" role="group" aria-roledescription="carousel" aria-label="Galeri peternakan">
+                        <div class="slider-track" id="slider-track">
+                                <figure class="slide">
+                                    <img src="gambar_pakan.jpeg" alt="Karung berisi jagung, dedak, campuran biji-bijian, dan pelet pakan ternak" loading="lazy">
+                                    <figcaption>Pakan ternak: jagung, biji-bijian, dan pelet</figcaption>
+                                </figure>
+                                <figure class="slide">
+                                    <img src="gambar_ayam.jpeg" alt="Kandang ayam terbuka berisi ayam putih dengan tempat pakan dan minum" loading="lazy">
+                                    <figcaption>Kandang ayam dengan tempat pakan dan minum</figcaption>
+                                </figure>
+                                <figure class="slide">
+                                    <img src="gambar_telur.jpeg" alt="Tumpukan telur ayam cokelat dalam peti" loading="lazy">
+                                    <figcaption>Telur ayam hasil peternakan</figcaption>
+                                </figure>
+                        </div>
+                        <button type="button" class="slider-btn prev" id="slider-prev" aria-label="Gambar sebelumnya">‹</button>
+                        <button type="button" class="slider-btn next" id="slider-next" aria-label="Gambar berikutnya">›</button>
+                        <div class="slider-dots" id="slider-dots"></div>
+                        <span class="slider-badge">📊 FEED-MATRIX Analytics</span>
                     </div>
                 </div>
 
@@ -983,6 +1021,162 @@
 
 
         <!-- =========================================
+             3B. MARKETPLACE (TERBUKA, TANPA LOGIN PEMBELI)
+        ========================================== -->
+        <section class="section marketplace-section" id="marketplace">
+            <div class="container">
+
+                <div class="section-heading">
+                    <span class="section-label">MARKETPLACE</span>
+                    <h2>Beli Langsung dari Peternak</h2>
+                    <p>
+                        Pembeli tidak perlu login. Pilih produk, kirim pesanan,
+                        lalu penjual akan menerima notifikasi dan menyetujui pesanan Anda.
+                    </p>
+                </div>
+
+                <div class="market-flow" aria-hidden="true">
+                    <span>🛒 Pembeli pesan</span>
+                    <i>→</i>
+                    <strong>Notifikasi ke penjual</strong>
+                    <i>→</i>
+                    <span>✅ Penjual setujui</span>
+                    <em>Tanpa tengkulak</em>
+                </div>
+
+                <div class="panel market-panel">
+
+                    <div class="market-toolbar">
+                        <div class="market-tabs" id="market-tabs" role="tablist">
+                            <button type="button" class="market-tab active" data-cat="pakan" role="tab">🌾 Pakan</button>
+                            <button type="button" class="market-tab" data-cat="ayam" role="tab">🐔 Ayam Panen</button>
+                            <button type="button" class="market-tab" data-cat="pupuk" role="tab">🌱 Pupuk Organik</button>
+                        </div>
+
+                        <input type="search" id="market-search" placeholder="Cari produk, penjual, atau lokasi…" aria-label="Cari listing marketplace">
+
+                        <button type="button" class="btn btn-outline" id="market-add">🔑 Login Penjual</button>
+                    </div>
+
+                    <p class="market-info" id="market-info"></p>
+
+                    <div class="market-grid" id="market-grid"></div>
+
+                    <p class="disclaimer">
+                        Listing bertanda "Contoh" adalah data ilustrasi untuk prototipe dan tidak diteruskan
+                        ke penjual nyata. Harga, stok, dan pembanding harga tengkulak perlu diverifikasi
+                        sebelum transaksi nyata.
+                    </p>
+                </div>
+
+                <div class="panel market-orders" id="market-orders">
+                    <div class="panel-header">
+                        <h3>Pesanan Anda</h3>
+                        <p id="market-flash">Pesanan hanya bisa dibatalkan dengan PIN yang Anda buat saat memesan, jadi pembeli lain tidak bisa mengubahnya.</p>
+                    </div>
+
+                    <form class="track-form" id="track-form" novalidate>
+                        <span>Pesanan tidak tampil? Buka dengan kode pesanan dan PIN yang Anda buat saat memesan.</span>
+                        <input type="text" id="track-kode" placeholder="Kode, mis. FM-AB12CD" maxlength="12" autocomplete="off" aria-label="Kode pesanan">
+                        <input type="password" id="track-pin" inputmode="numeric" placeholder="PIN pesanan" maxlength="6" autocomplete="off" aria-label="PIN pesanan">
+                        <button type="submit" class="btn btn-outline">Buka Pesanan</button>
+                        <button type="button" class="btn btn-outline" id="orders-lock" title="Sembunyikan semua pesanan dari tab ini dan kunci. Buka lagi dengan kode pesanan + PIN.">🔒 Sembunyikan &amp; Kunci Daftar</button>
+                    </form>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Kode</th>
+                                    <th>Produk</th>
+                                    <th>Penjual</th>
+                                    <th>Jumlah</th>
+                                    <th>Total (Rp)</th>
+                                    <th>Hemat vs Tengkulak</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabel-pesanan">
+                                <tr><td colspan="9">Belum ada pesanan.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- DIALOG: KONFIRMASI PIN (batalkan pesanan) -->
+            <dialog class="market-dialog" id="pin-dialog" aria-labelledby="pin-title">
+                <form id="pin-form" novalidate>
+                    <h3 id="pin-title">Masukkan PIN Pesanan</h3>
+                    <p class="market-dialog-meta" id="pin-meta"></p>
+
+                    <div class="form-group">
+                        <label for="pin-input">PIN</label>
+                        <input type="password" id="pin-input" inputmode="numeric" maxlength="6" placeholder="PIN yang Anda buat saat memesan" autocomplete="off">
+                    </div>
+
+                    <p class="login-error" id="pin-error" role="alert" hidden></p>
+
+                    <div class="market-dialog-actions">
+                        <button type="button" class="btn btn-outline" data-close="pin-dialog">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="pin-submit">Batalkan Pesanan</button>
+                    </div>
+                </form>
+            </dialog>
+
+            <!-- DIALOG: PESAN LANGSUNG (pembeli, tanpa login) -->
+            <dialog class="market-dialog" id="order-dialog" aria-labelledby="order-title">
+                <form id="order-form" novalidate>
+                    <h3 id="order-title">Pesan Langsung</h3>
+                    <p class="market-dialog-meta" id="order-meta"></p>
+
+                    <div class="form-group">
+                        <label for="order-nama">Nama Pembeli</label>
+                        <input type="text" id="order-nama" maxlength="60" placeholder="Nama Anda / usaha Anda" autocomplete="name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-wa">WhatsApp Anda (dihubungi penjual)</label>
+                        <input type="tel" id="order-wa" maxlength="16" placeholder="Contoh: 081234567890" autocomplete="tel">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-pin">PIN Pesanan (4–6 angka)</label>
+                        <input type="password" id="order-pin" inputmode="numeric" maxlength="6" placeholder="Buat PIN rahasia" autocomplete="new-password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-jumlah" id="order-jumlah-label">Jumlah (kg)</label>
+                        <input type="number" id="order-jumlah" min="1" step="1" placeholder="Jumlah pesanan">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-catatan">Catatan (opsional)</label>
+                        <input type="text" id="order-catatan" maxlength="120" placeholder="Contoh: kirim hari Jumat pagi">
+                    </div>
+
+                    <div class="market-summary">
+                        <div class="calculation-row"><span>Total Harga</span><strong id="order-total">Rp —</strong></div>
+                        <div class="calculation-row"><span>Hemat vs tengkulak</span><strong id="order-hemat">—</strong></div>
+                    </div>
+
+                    <p class="market-dialog-meta" id="order-send-note"></p>
+
+                    <p class="login-error" id="order-error" role="alert" hidden></p>
+
+                    <div class="market-dialog-actions">
+                        <button type="button" class="btn btn-outline" data-close="order-dialog">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="order-submit">Kirim Pesanan</button>
+                    </div>
+                </form>
+            </dialog>
+        </section>
+
+
+        <!-- =========================================
              5. EDUKASI KONSUMSI PAKAN
         ========================================== -->
         <section class="section education-section" id="edukasi">
@@ -1027,59 +1221,10 @@
                             </p>
                         </div>
 
-                        <a href="#faq" class="btn btn-outline">
+                        <a href="#metodologi" class="btn btn-outline" id="btn-metodologi">
                             Pelajari Metodologi
                         </a>
                     </article>
-
-                </div>
-            </div>
-        </section>
-
-
-        <!-- =========================================
-             6. DIREKTORI SUPPLIER
-        ========================================== -->
-        <section class="section supplier-section" id="supplier">
-            <div class="container">
-
-                <div class="section-heading">
-                    <span class="section-label">DIREKTORI PAKAN</span>
-                    <h2>Referensi Supplier Pakan</h2>
-                    <p>
-                        Direktori untuk membantu membandingkan
-                        informasi produk dan harga pakan.
-                    </p>
-                </div>
-
-                <div class="panel supplier-panel">
-
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Nama Supplier</th>
-                                    <th>Lokasi</th>
-                                    <th>Produk</th>
-                                    <th>Harga Referensi (Rp/kg)</th>
-                                    <th>Kontak</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="tabel-supplier">
-                                <tr>
-                                    <td colspan="5">
-                                        Data supplier belum ditambahkan.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <p class="disclaimer">
-                        Harga, ketersediaan, dan informasi supplier
-                        perlu diverifikasi sebelum digunakan.
-                    </p>
 
                 </div>
             </div>
@@ -1180,13 +1325,12 @@
                 <a href="#dashboard">Dashboard</a>
                 <a href="#marketplace">Marketplace</a>
                 <a href="#edukasi">Edukasi</a>
-                <a href="#supplier">Direktori Pakan</a>
             </div>
 
             <div class="footer-links">
                 <h3>Dokumentasi</h3>
-                <a href="#faq">Panduan Pengguna</a>
-                <a href="#faq">Metodologi Perhitungan</a>
+                <a href="#metodologi/pembeli">Panduan Pengguna</a>
+                <a href="#metodologi">Metodologi Perhitungan</a>
                 <a href="#faq">Informasi Sistem</a>
             </div>
 
@@ -1209,6 +1353,13 @@
         </div>
     </footer>
 
+
+    <!-- Notifikasi pesanan baru (penjual) -->
+    <div class="order-toast" id="toast" role="status" aria-live="polite" hidden>
+        <span id="toast-text"></span>
+        <button type="button" class="toast-go" id="toast-go">Lihat</button>
+        <button type="button" class="toast-x" id="toast-x" aria-label="Tutup notifikasi">×</button>
+    </div>
 
     <!-- JavaScript -->
     
