@@ -908,29 +908,45 @@
     var MARKET_SAMPLES = [
         { id: "ayam-1", kat: "ayam", nama: "Ayam Broiler Panen (hidup), umur 33 hari",
           penjual: "Kandang Berkah Maju", lokasi: "Gowa", harga: 21500, hargaTengkulak: 23000,
-          stok: 1800, minOrder: 100, catatan: "Bobot rata-rata ±1,8 kg/ekor", kontak: "" },
+          stok: 1800, minOrder: 100, catatan: "Bobot rata-rata ±1,8 kg/ekor", kontak: "",
+          foto: "gambar_ayam.jpeg",
+          deskripsi: "Ayam broiler hidup umur 33 hari, seragam dan aktif. Bobot rata-rata sekitar 1,8 kg per ekor.\nPanen bisa dijadwalkan sesuai kebutuhan Anda dan diambil langsung di lokasi kandang." },
         { id: "ayam-2", kat: "ayam", nama: "Ayam Broiler Panen (hidup), umur 35 hari",
           penjual: "Peternakan Sumber Rejeki", lokasi: "Maros", harga: 21000, hargaTengkulak: 22500,
-          stok: 2400, minOrder: 200, catatan: "Bobot rata-rata ±2,0 kg/ekor", kontak: "" },
+          stok: 2400, minOrder: 200, catatan: "Bobot rata-rata ±2,0 kg/ekor", kontak: "",
+          foto: "gambar_ayam.jpeg",
+          deskripsi: "Ayam broiler hidup umur 35 hari dengan bobot rata-rata sekitar 2,0 kg per ekor.\nCocok untuk pedagang dan rumah potong. Pengambilan di kandang, pengiriman bisa dibicarakan." },
         { id: "ayam-3", kat: "ayam", nama: "Ayam Broiler Panen (hidup), umur 34 hari",
           penjual: "Kandang Tani Mandiri", lokasi: "Takalar", harga: 20800, hargaTengkulak: 22300,
-          stok: 1200, minOrder: 100, catatan: "Bobot rata-rata ±1,9 kg/ekor", kontak: "" },
-        { id: "pupuk-1", kat: "pupuk", nama: "Pupuk Kandang Ayam Fermentasi (kering, curah)",
-          penjual: "Kandang Berkah Maju", lokasi: "Gowa", harga: 1500, hargaTengkulak: 2000,
-          stok: 5000, minOrder: 50, catatan: "Dari kotoran kandang broiler, sudah difermentasi", kontak: "" },
-        { id: "pupuk-2", kat: "pupuk", nama: "Pupuk Organik Granul dari Kotoran Ayam",
-          penjual: "Peternakan Sumber Rejeki", lokasi: "Maros", harga: 3500, hargaTengkulak: 4500,
-          stok: 2000, minOrder: 25, catatan: "Butiran seragam, mudah ditebar", kontak: "" },
-        { id: "pupuk-3", kat: "pupuk", nama: "Kompos Kotoran Ayam + Sekam (karung 25 kg)",
-          penjual: "Kandang Tani Mandiri", lokasi: "Takalar", harga: 1800, hargaTengkulak: 2400,
-          stok: 3000, minOrder: 25, catatan: "Dikemas karung 25 kg", kontak: "" }
+          stok: 1200, minOrder: 100, catatan: "Bobot rata-rata ±1,9 kg/ekor", kontak: "",
+          foto: "gambar_ayam.jpeg",
+          deskripsi: "Ayam broiler hidup umur 34 hari, bobot rata-rata sekitar 1,9 kg per ekor.\nDipelihara dengan pencatatan pakan harian sehingga performa pertumbuhannya terpantau." },
+        { id: "telur-1", kat: "telur", nama: "Telur Ayam Ras Cokelat, grade A",
+          penjual: "Kandang Berkah Maju", lokasi: "Gowa", harga: 27000, hargaTengkulak: 28500,
+          stok: 900, minOrder: 10, catatan: "Dijual per kg (±16 butir/kg)", kontak: "",
+          foto: "gambar_telur.jpeg",
+          deskripsi: "Telur ayam ras cokelat ukuran besar, cangkang bersih dan utuh.\nDikumpulkan setiap hari dan dikemas rapi dalam rak telur agar aman saat pengiriman." },
+        { id: "telur-2", kat: "telur", nama: "Telur Ayam Ras, ukuran sedang",
+          penjual: "Peternakan Sumber Rejeki", lokasi: "Maros", harga: 26500, hargaTengkulak: 28000,
+          stok: 1200, minOrder: 20, catatan: "Dijual per kg (±18 butir/kg)", kontak: "",
+          foto: "gambar_telur.jpeg",
+          deskripsi: "Telur ayam ras ukuran sedang untuk kebutuhan warung, katering, dan usaha kue.\nStok tersedia setiap hari; pemesanan dalam jumlah besar bisa diambil di kandang." },
+        { id: "telur-3", kat: "telur", nama: "Telur Ayam Kampung",
+          penjual: "Kandang Tani Mandiri", lokasi: "Takalar", harga: 48000, hargaTengkulak: 52000,
+          stok: 250, minOrder: 5, catatan: "Dijual per kg (±14 butir/kg)", kontak: "",
+          foto: "gambar_telur.jpeg",
+          deskripsi: "Telur ayam kampung segar dengan kuning telur pekat.\nJumlah terbatas, disarankan memesan lebih awal agar stok tersedia." }
     ];
 
+    // Kategori yang bisa dipilih penjual. "pupuk" hanya dipertahankan agar listing lama tetap tampil.
+    var CAT_VALID = ["pakan", "telur", "ayam"];
     var CAT_INFO = {
-        pakan: { ikon: "🌾", unit: "kg" },
-        ayam: { ikon: "🐔", unit: "kg" },
-        pupuk: { ikon: "🌱", unit: "kg" }
+        pakan: { ikon: "🌾", unit: "kg", nama: "Pakan" },
+        telur: { ikon: "🥚", unit: "kg", nama: "Telur" },
+        ayam: { ikon: "🐔", unit: "kg", nama: "Ayam" },
+        pupuk: { ikon: "🌱", unit: "kg", nama: "Pupuk (lama)" }
     };
+    var MIN_ORDER_DEFAULT = { pakan: 50, telur: 10, ayam: 100, pupuk: 25 };
 
     var ORDER_STATUS = {
         menunggu:   { label: "Menunggu persetujuan", cls: "status-warning" },
@@ -946,8 +962,14 @@
             return Array.isArray(d) ? d : [];
         } catch (e) { return []; }
     }
+    // true jika tersimpan; false jika gagal (mis. penyimpanan browser penuh)
     function saveList(key, arr) {
-        try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
+        try {
+            localStorage.setItem(key, JSON.stringify(arr));
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
     // Daftar "Pesanan Anda" hanya hidup di tab ini. Tab/browser baru harus membuka
     // pesanan dengan kode + PIN, jadi pembeli lain di perangkat yang sama tidak melihatnya.
@@ -1039,7 +1061,10 @@
                 lokasi: sp.lokasi, harga: sp.harga,
                 hargaTengkulak: Math.round(sp.harga * 1.08 / 100) * 100,
                 stok: 20000, minOrder: 500, catatan: "Pakan broiler langsung dari supplier",
-                kontak: sp.kontak || "", sampel: true
+                kontak: sp.kontak || "", sampel: true,
+                foto: "gambar_pakan.jpeg",
+                deskripsi: "Pakan broiler " + sp.produk + " dari " + sp.nama + " (" + sp.lokasi + ").\n" +
+                    "Harga langsung dari supplier tanpa perantara, bisa dibandingkan dengan harga via tengkulak."
             };
         });
         var samples = MARKET_SAMPLES.map(function (m) {
@@ -1277,32 +1302,87 @@
                 ? "Harga pakan pada catatan terakhir Anda (" + dmy(rec.tgl) + "): " +
                   rp(rec.harga) + "/kg. Bandingkan dengan harga langsung supplier di bawah."
                 : "Harga langsung dari supplier, tanpa tengkulak. Bandingkan harga lalu pesan.";
-        } else if (marketCat === "ayam") {
-            txt = "Pesan ayam panen langsung dari peternak. Tanpa login: penjual akan menyetujui pesanan Anda.";
+        } else if (marketCat === "telur") {
+            txt = "Telur segar langsung dari peternak. Klik foto produk untuk melihat detail. Tanpa login: penjual akan menyetujui pesanan Anda.";
         } else {
-            txt = "Pupuk organik dari kotoran kandang broiler. Tanpa login: penjual akan menyetujui pesanan Anda.";
+            txt = "Pesan ayam panen langsung dari peternak. Klik foto produk untuk melihat detail. Tanpa login: penjual akan menyetujui pesanan Anda.";
         }
         info.textContent = txt;
+    }
+
+    /* --- foto produk --- */
+    // Hanya izinkan data-URL gambar atau nama file gambar lokal (mencegah sumber aneh dari data yang diubah).
+    function safeImgSrc(src) {
+        var t = String(src || "");
+        if (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(t)) return t;
+        if (/^[\w\-.\/]+\.(jpe?g|png|webp|gif)$/i.test(t)) return t;
+        return "";
+    }
+
+    function catInfo(m) {
+        return CAT_INFO[m.kat] || CAT_INFO.pakan;
+    }
+
+    function productImage(m, cls) {
+        var info = catInfo(m);
+        function fallback() {
+            return el("div", "market-photo-fallback", info.ikon);
+        }
+        var src = safeImgSrc(m.foto);
+        if (!src) return fallback();
+        var img = document.createElement("img");
+        img.className = cls;
+        img.src = src;
+        img.alt = m.nama;
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.onerror = function () {
+            if (img.parentNode) img.parentNode.replaceChild(fallback(), img);
+        };
+        return img;
+    }
+
+    function hematPct(m) {
+        return m.hargaTengkulak && m.hargaTengkulak > m.harga
+            ? Math.round((m.hargaTengkulak - m.harga) / m.hargaTengkulak * 100) : 0;
+    }
+
+    function fillBadges(box, m) {
+        box.innerHTML = "";
+        box.appendChild(el("span", "market-badge", "Direct to Buyer"));
+        var hemat = hematPct(m);
+        if (hemat > 0) box.appendChild(el("span", "market-badge save", "Hemat " + hemat + "%"));
+        if (m.mine) box.appendChild(el("span", "market-badge mine", "Milik Anda"));
+        else if (m.sampel) box.appendChild(el("span", "market-badge sample", "Contoh"));
+    }
+
+    function shorten(t, n) {
+        var x = String(t || "").replace(/\s+/g, " ").trim();
+        return x.length > n ? x.slice(0, n - 1).trim() + "…" : x;
     }
 
     function listingCard(m, rec, mode) {
         var card = el("article", "market-card");
 
-        var top = el("div", "market-card-top");
-        top.appendChild(el("div", "market-icon", CAT_INFO[m.kat].ikon));
+        var media = el("div", "market-photo");
+        media.setAttribute("data-detail", m.id);
+        media.setAttribute("role", "button");
+        media.tabIndex = 0;
+        media.setAttribute("aria-label", "Lihat detail " + m.nama);
+        media.appendChild(productImage(m, "market-photo-img"));
         var badges = el("div", "market-badges");
-        badges.appendChild(el("span", "market-badge", "Direct to Buyer"));
-        var hemat = m.hargaTengkulak && m.hargaTengkulak > m.harga
-            ? Math.round((m.hargaTengkulak - m.harga) / m.hargaTengkulak * 100) : 0;
-        if (hemat > 0) badges.appendChild(el("span", "market-badge save", "Hemat " + hemat + "%"));
-        if (m.mine) badges.appendChild(el("span", "market-badge mine", "Milik Anda"));
-        else if (m.sampel) badges.appendChild(el("span", "market-badge sample", "Contoh"));
-        top.appendChild(badges);
-        card.appendChild(top);
+        fillBadges(badges, m);
+        media.appendChild(badges);
+        var info = catInfo(m);
+        media.appendChild(el("span", "market-cat", info.ikon + " " + info.nama));
+        card.appendChild(media);
 
         var body = el("div", "market-card-body");
-        body.appendChild(el("h4", "", m.nama));
+        var title = el("h4", "", m.nama);
+        title.setAttribute("data-detail", m.id);
+        body.appendChild(title);
         body.appendChild(el("div", "market-seller", m.penjual + " · 📍 " + m.lokasi));
+        if (m.deskripsi) body.appendChild(el("p", "market-desc", shorten(m.deskripsi, 140)));
 
         var price = el("div", "market-price", rp(m.harga) + " ");
         price.appendChild(el("small", "", "/kg"));
@@ -1331,6 +1411,11 @@
 
         var act = el("div", "market-actions");
         if (mode === "seller") {
+            var sv = el("button", "btn-small", "Lihat Detail");
+            sv.type = "button";
+            sv.setAttribute("data-act", "detail");
+            sv.setAttribute("data-id", m.id);
+            act.appendChild(sv);
             var d = el("button", "btn-small btn-delete", "Hapus");
             d.type = "button";
             d.setAttribute("data-act", "del");
@@ -1344,6 +1429,11 @@
             b.setAttribute("data-act", "order");
             b.setAttribute("data-id", m.id);
             act.appendChild(b);
+            var dt = el("button", "btn btn-outline", "Lihat Detail");
+            dt.type = "button";
+            dt.setAttribute("data-act", "detail");
+            dt.setAttribute("data-id", m.id);
+            act.appendChild(dt);
             // Listing nyata: kontak penjual baru dibuka setelah pesanan disetujui.
             if (m.sampel && m.kontak) {
                 var a = el("a", "btn btn-outline", "WhatsApp");
@@ -1679,13 +1769,128 @@
         $("market-orders").scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
 
+    /* --- detail produk (tampilan besar) --- */
+    var productCtx = null;
+
+    function openProduct(id, mode) {
+        var m = findListing(id);
+        if (!m) return;
+        productCtx = { id: id, mode: mode };
+        var info = catInfo(m);
+
+        var media = $("pd-media");
+        media.innerHTML = "";
+        media.appendChild(productImage(m, "pd-img"));
+        media.appendChild(el("span", "market-cat", info.ikon + " " + info.nama));
+
+        fillBadges($("pd-badges"), m);
+        $("pd-title").textContent = m.nama;
+        $("pd-seller").textContent = "Dijual oleh " + m.penjual;
+        $("pd-price").textContent = rp(m.harga) + "/kg";
+
+        var old = $("pd-old");
+        old.innerHTML = "";
+        if (m.hargaTengkulak && m.hargaTengkulak > m.harga) {
+            old.appendChild(document.createTextNode("Via tengkulak ±"));
+            old.appendChild(el("s", "", rp(m.hargaTengkulak) + "/kg"));
+            old.appendChild(document.createTextNode(" · hemat " + rp(m.hargaTengkulak - m.harga) + "/kg"));
+        }
+
+        $("pd-jenis").textContent = info.ikon + " " + info.nama;
+        $("pd-lokasi").textContent = m.lokasi || "—";
+        var soldOut = isSoldOut(m);
+        $("pd-stok").textContent = soldOut ? "Habis" : num(m.stok, 0) + " kg";
+        $("pd-min").textContent = num(m.minOrder, 0) + " kg";
+        $("pd-desc").textContent = m.deskripsi || "Penjual belum menambahkan deskripsi untuk produk ini.";
+        $("pd-note").textContent = m.catatan || "";
+
+        var ob = $("pd-order");
+        var canOrder = mode !== "seller";
+        ob.hidden = !canOrder;
+        ob.disabled = soldOut;
+        ob.textContent = soldOut ? "Stok habis" : m.kat === "pakan" ? "Beli Langsung" : "Pesan Langsung";
+
+        $("product-dialog").scrollTop = 0;
+        openDialog("product-dialog");
+    }
+
+    /* --- foto produk: baca, kecilkan, simpan sebagai JPEG (data URL) --- */
+    var PHOTO_MAX_CHARS = 320000;   // ±240 KB per foto agar muat di LocalStorage
+
+    function processPhoto(file, done) {
+        if (!file || String(file.type).indexOf("image/") !== 0) {
+            done("Pilih file gambar (JPG, PNG, atau WebP).");
+            return;
+        }
+        if (file.size > 15 * 1024 * 1024) {
+            done("Ukuran foto maksimal 15 MB.");
+            return;
+        }
+        var reader = new FileReader();
+        reader.onerror = function () { done("Foto tidak bisa dibaca. Coba file lain."); };
+        reader.onload = function () {
+            var img = new Image();
+            img.onerror = function () { done("File bukan gambar yang valid."); };
+            img.onload = function () {
+                var w = img.naturalWidth, h = img.naturalHeight;
+                if (!w || !h) { done("File bukan gambar yang valid."); return; }
+                var maxSide = 1000;
+                var out = "";
+                for (var attempt = 0; attempt < 5; attempt++) {
+                    var sc = Math.min(1, maxSide / Math.max(w, h));
+                    var cv = document.createElement("canvas");
+                    cv.width = Math.max(1, Math.round(w * sc));
+                    cv.height = Math.max(1, Math.round(h * sc));
+                    var cx = cv.getContext("2d");
+                    cx.fillStyle = "#ffffff";
+                    cx.fillRect(0, 0, cv.width, cv.height);
+                    cx.drawImage(img, 0, 0, cv.width, cv.height);
+                    var q = 0.82;
+                    out = cv.toDataURL("image/jpeg", q);
+                    while (out.length > PHOTO_MAX_CHARS && q > 0.5) {
+                        q -= 0.1;
+                        out = cv.toDataURL("image/jpeg", q);
+                    }
+                    if (out.length <= PHOTO_MAX_CHARS) break;
+                    maxSide = Math.round(maxSide * 0.75);
+                }
+                if (out.length > PHOTO_MAX_CHARS) { done("Foto terlalu besar. Pilih foto lain."); return; }
+                done(null, out);
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    var listingPhoto = "";
+
+    function setPhotoPreview(data) {
+        var pv = $("lst-foto-preview");
+        var txt = $("lst-foto-text");
+        var drop = $("lst-foto-drop");
+        if (data) {
+            pv.src = data;
+            pv.hidden = false;
+            txt.textContent = "Ganti foto";
+            drop.classList.add("has-photo");
+        } else {
+            pv.removeAttribute("src");
+            pv.hidden = true;
+            txt.textContent = "📷 Pilih atau ambil foto produk";
+            drop.classList.remove("has-photo");
+        }
+    }
+
     /* --- pasang listing (khusus penjual) --- */
     function openListing() {
         if (!currentSeller()) return;
         $("listing-form").reset();
         $("listing-error").hidden = true;
         var rec = latestRecord();
-        $("lst-kat").value = marketCat === "pupuk" ? "pupuk" : "ayam";
+        $("lst-kat").value = CAT_VALID.indexOf(marketCat) !== -1 ? marketCat : "";
+        listingPhoto = "";
+        setPhotoPreview("");
+        $("lst-desc-count").textContent = "0";
         if (rec && rec.lokasi) $("lst-lokasi").value = rec.lokasi;
         $("listing-hint").textContent = rec && rec.ayam > 0 && rec.bobot > 0
             ? "Estimasi biomassa catatan terakhir: ≈ " + num(rec.ayam * rec.bobot, 0) + " kg."
@@ -1710,7 +1915,16 @@
         var harga = parseFloat($("lst-harga").value);
         var kontak = waNumber($("lst-kontak").value);
 
+        var kat = $("lst-kat").value;
+        var deskripsi = $("lst-deskripsi").value.trim();
+
+        if (CAT_VALID.indexOf(kat) === -1) { listingError("Pilih jenis produk: pakan, telur, atau ayam."); return; }
         if (!nama) { listingError("Nama produk wajib diisi."); return; }
+        if (!listingPhoto) { listingError("Foto produk wajib ditambahkan."); return; }
+        if (deskripsi.length < 20) {
+            listingError("Deskripsi wajib diisi, minimal 20 karakter. Ceritakan kualitas, kemasan, atau cara pengambilan.");
+            return;
+        }
         if (!lokasi) { listingError("Lokasi wajib diisi."); return; }
         if (!(jumlah > 0)) { listingError("Jumlah tersedia harus lebih dari 0."); return; }
         if (!(harga > 0)) { listingError("Harga harus lebih dari 0."); return; }
@@ -1719,7 +1933,6 @@
             return;
         }
 
-        var kat = $("lst-kat").value === "pupuk" ? "pupuk" : "ayam";
         reloadMarketData();
         marketUser.push({
             id: "u-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
@@ -1728,10 +1941,15 @@
             sellerEmail: lc(seller.email),
             lokasi: lokasi,
             harga: harga, hargaTengkulak: null, stok: jumlah,
-            minOrder: Math.min(jumlah, kat === "ayam" ? 100 : 25),
-            catatan: "", kontak: kontak
+            minOrder: Math.min(jumlah, MIN_ORDER_DEFAULT[kat] || 25),
+            catatan: "", kontak: kontak,
+            foto: listingPhoto,
+            deskripsi: deskripsi
         });
-        saveList(MKEY, marketUser);
+        if (!saveList(MKEY, marketUser)) {
+            listingError("Penyimpanan browser penuh. Hapus listing lama atau gunakan foto lain yang lebih kecil.");
+            return;
+        }
         closeDialog("listing-dialog");
         marketCat = kat;
         syncMarketTabs();
@@ -1798,7 +2016,26 @@
 
         $("market-grid").addEventListener("click", function (e) {
             var b = e.target.closest("button[data-act='order']");
-            if (b) openOrder(b.getAttribute("data-id"));
+            if (b) { openOrder(b.getAttribute("data-id")); return; }
+            var d = e.target.closest("[data-detail], button[data-act='detail']");
+            if (d) openProduct(d.getAttribute("data-detail") || d.getAttribute("data-id"), "public");
+        });
+        $("market-grid").addEventListener("keydown", function (e) {
+            if (e.key !== "Enter" && e.key !== " ") return;
+            var d = e.target.closest && e.target.closest(".market-photo[data-detail]");
+            if (!d) return;
+            e.preventDefault();
+            openProduct(d.getAttribute("data-detail"), "public");
+        });
+
+        // Detail produk: tombol pesan, klik di luar kotak untuk menutup
+        $("pd-order").addEventListener("click", function () {
+            var ctx = productCtx;
+            closeDialog("product-dialog");
+            if (ctx) openOrder(ctx.id);
+        });
+        $("product-dialog").addEventListener("click", function (e) {
+            if (e.target === this) closeDialog("product-dialog");
         });
 
         // Aksi pembeli pada tabel "Pesanan Anda"
@@ -1908,7 +2145,38 @@
 
         $("seller-grid").addEventListener("click", function (e) {
             var b = e.target.closest("button[data-act='del']");
-            if (b) deleteListing(b.getAttribute("data-id"));
+            if (b) { deleteListing(b.getAttribute("data-id")); return; }
+            var d = e.target.closest("[data-detail], button[data-act='detail']");
+            if (d) openProduct(d.getAttribute("data-detail") || d.getAttribute("data-id"), "seller");
+        });
+        $("seller-grid").addEventListener("keydown", function (e) {
+            if (e.key !== "Enter" && e.key !== " ") return;
+            var d = e.target.closest && e.target.closest(".market-photo[data-detail]");
+            if (!d) return;
+            e.preventDefault();
+            openProduct(d.getAttribute("data-detail"), "seller");
+        });
+
+        // Foto + deskripsi pada form listing
+        $("lst-foto").addEventListener("change", function () {
+            var f = this.files && this.files[0];
+            this.value = "";
+            if (!f) return;
+            $("lst-foto-text").textContent = "Memproses foto…";
+            processPhoto(f, function (err, data) {
+                if (err) {
+                    listingPhoto = "";
+                    setPhotoPreview("");
+                    listingError(err);
+                    return;
+                }
+                $("listing-error").hidden = true;
+                listingPhoto = data;
+                setPhotoPreview(data);
+            });
+        });
+        $("lst-deskripsi").addEventListener("input", function () {
+            $("lst-desc-count").textContent = String(this.value.length);
         });
 
         $("tabel-pesanan-masuk").addEventListener("click", function (e) {
