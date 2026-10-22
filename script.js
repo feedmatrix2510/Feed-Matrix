@@ -11,6 +11,9 @@
     var DEFAULT_THRESHOLD = 5; // persen
     var TEMP_LIMIT = 32;       // °C, batas suhu kandang panas (Live Kandang)
 
+    var SESSION_KEY = "feedmatrix.session.v2";   // sessionStorage: {type, name, email}
+    var USERS_KEY = "feedmatrix.users.v1";       // localStorage: akun email penjual
+
     var $ = function (id) {
         return document.getElementById(id);
     };
@@ -889,13 +892,18 @@
     $("export-csv").addEventListener("click", exportCSV);
 
     /* =========================================================
-       MARKETPLACE TERINTEGRASI (Fitur Baru C)
-       - Beli Pakan: diambil dari daftar SUPPLIERS (Direktori Pakan)
-       - Jual Ayam Panen & Jual Pupuk Organik: contoh + listing sendiri
-       - Pesanan & listing sendiri disimpan di LocalStorage (simulasi)
+       MARKETPLACE TERBUKA
+       - PEMBELI tidak perlu login: cukup isi nama + WhatsApp.
+       - PENJUAL login: pasang listing, terima notifikasi pesanan,
+         lalu menyetujui atau menolak pembeli.
+       - Data disimpan di localStorage (satu browser, antar tab).
+         Agar pesanan sampai ke penjual di perangkat lain, ganti
+         fungsi loadList/saveList dengan backend (Firebase, Supabase, dll).
        ========================================================= */
-    var MKEY = "feedmatrix.market.v1";
-    var OKEY = "feedmatrix.orders.v1";
+    var MKEY = "feedmatrix.market.v2";      // listing buatan penjual
+    var OKEY = "feedmatrix.orders.v2";      // semua pesanan
+    var MYKEY = "feedmatrix.myorders.session"; // pesanan yang sedang dibuka di TAB ini (sessionStorage)
+    var BASE_TITLE = document.title;
 
     var MARKET_SAMPLES = [
         { id: "ayam-1", kat: "ayam", nama: "Ayam Broiler Panen (hidup), umur 33 hari",
@@ -924,6 +932,14 @@
         pupuk: { ikon: "🌱", unit: "kg" }
     };
 
+    var ORDER_STATUS = {
+        menunggu:   { label: "Menunggu persetujuan", cls: "status-warning" },
+        disetujui:  { label: "Disetujui", cls: "status-normal" },
+        ditolak:    { label: "Ditolak penjual", cls: "status-danger" },
+        dibatalkan: { label: "Dibatalkan pembeli", cls: "status-danger" },
+        contoh:     { label: "Simulasi (listing contoh)", cls: "status-warning" }
+    };
+
     function loadList(key) {
         try {
             var d = JSON.parse(localStorage.getItem(key));
@@ -933,12 +949,31 @@
     function saveList(key, arr) {
         try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
     }
+    // Daftar "Pesanan Anda" hanya hidup di tab ini. Tab/browser baru harus membuka
+    // pesanan dengan kode + PIN, jadi pembeli lain di perangkat yang sama tidak melihatnya.
+    function loadSessionList(key) {
+        try {
+            var d = JSON.parse(sessionStorage.getItem(key));
+            return Array.isArray(d) ? d : [];
+        } catch (e) { return []; }
+    }
+    function saveSessionList(key, arr) {
+        try { sessionStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
+    }
 
     var marketUser = loadList(MKEY);
     var orders = loadList(OKEY);
+    var myOrderIds = loadSessionList(MYKEY);
     var marketCat = "pakan";
     var marketQuery = "";
     var orderTarget = null;
+
+    // Selalu baca ulang sebelum mengubah data, supaya tidak menimpa perubahan dari tab lain.
+    function reloadMarketData() {
+        marketUser = loadList(MKEY);
+        orders = loadList(OKEY);
+        myOrderIds = loadSessionList(MYKEY);
+    }
 
     function el(tag, cls, text) {
         var n = document.createElement(tag);
@@ -946,8 +981,58 @@
         if (text !== undefined) n.textContent = text;
         return n;
     }
+    function lc(v) {
+        return String(v || "").toLowerCase();
+    }
+    function copyObj(src) {
+        var x = {};
+        for (var k in src) x[k] = src[k];
+        return x;
+    }
+    // sel tabel dengan teks utama + baris kecil di bawahnya
+    function tdStack(main, subs) {
+        var c = document.createElement("td");
+        c.appendChild(el("div", "cell-main", main));
+        (subs || []).forEach(function (s) {
+            if (s) c.appendChild(el("small", "cell-sub", s));
+        });
+        return c;
+    }
+    function fmtStamp(ts) {
+        var d = new Date(ts);
+        function p(n) { return n < 10 ? "0" + n : "" + n; }
+        return p(d.getDate()) + "/" + p(d.getMonth() + 1) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+    }
+    // Catat kapan dan oleh siapa status pesanan diubah (jejak perubahan).
+    function stampOrder(o, oleh) {
+        o.diubah = Date.now();
+        o.oleh = oleh;
+    }
+    function statusCell(o) {
+        var st = ORDER_STATUS[o.status] || ORDER_STATUS.menunggu;
+        var c = document.createElement("td");
+        c.appendChild(el("span", "status " + st.cls, st.label));
+        if (o.alasan) c.appendChild(el("small", "cell-sub", o.alasan));
+        if (o.diubah) {
+            c.appendChild(el("small", "cell-sub",
+                "Diperbarui " + fmtStamp(o.diubah) + (o.oleh ? " oleh " + o.oleh : "")));
+        }
+        return c;
+    }
 
+    /* --- penjual yang sedang login --- */
+    function currentSeller() {
+        var s = getSession();
+        return s && (s.type === "email" || s.type === "google") && s.email ? s : null;
+    }
+    function sellerEmail() {
+        var s = currentSeller();
+        return s ? lc(s.email) : "";
+    }
+
+    /* --- daftar listing --- */
     function allListings() {
+        var me = sellerEmail();
         var pakan = SUPPLIERS.map(function (sp, i) {
             return {
                 id: "pakan-" + i, kat: "pakan", nama: sp.produk, penjual: sp.nama,
@@ -957,15 +1042,17 @@
                 kontak: sp.kontak || "", sampel: true
             };
         });
-        var mine = marketUser.map(function (m) {
-            var x = {}; for (var k in m) x[k] = m[k];
-            x.mine = true; return x;
-        });
         var samples = MARKET_SAMPLES.map(function (m) {
-            var x = {}; for (var k in m) x[k] = m[k];
-            x.sampel = true; return x;
+            var x = copyObj(m);
+            x.sampel = true;
+            return x;
         });
-        return pakan.concat(samples, mine);
+        var real = marketUser.map(function (m) {
+            var x = copyObj(m);
+            x.mine = !!me && lc(m.sellerEmail) === me;
+            return x;
+        });
+        return pakan.concat(samples, real);
     }
 
     function findListing(id) {
@@ -974,6 +1061,212 @@
         return null;
     }
 
+    function isSoldOut(m) {
+        return !(m.stok > 0 && m.stok >= m.minOrder);
+    }
+
+    /* --- nomor WhatsApp --- */
+    function waNumber(raw) {
+        var d = String(raw || "").replace(/\D/g, "");
+        if (!d) return "";
+        if (d.indexOf("0") === 0) d = "62" + d.slice(1);
+        else if (d.indexOf("8") === 0) d = "62" + d;
+        return d;
+    }
+    function waLink(no, text) {
+        var n = waNumber(no);
+        return n ? "https://wa.me/" + n + "?text=" + encodeURIComponent(text) : "";
+    }
+    function openWA(url) {
+        if (url) window.open(url, "_blank", "noopener");
+    }
+    function approvalMessage(o) {
+        return [
+            "Halo " + o.pembeli + ", pesanan Anda di FEED-MATRIX (kode " + o.id + ") sudah saya setujui.",
+            "",
+            "Produk: " + o.nama,
+            "Jumlah: " + num(o.jumlah, 0) + " kg",
+            "Total: " + rp(o.total),
+            "",
+            "Mari lanjut atur pembayaran dan pengirimannya. Terima kasih."
+        ].join("\n");
+    }
+    function buyerMessage(o) {
+        return "Halo " + o.penjual + ", saya pembeli dengan kode pesanan " + o.id + " (" +
+            o.nama + ", " + num(o.jumlah, 0) + " kg). Mohon info pembayaran dan pengirimannya. Terima kasih.";
+    }
+
+    /* ---------- PIN pesanan ----------
+       Pembeli membuat PIN 4-6 angka saat memesan. Yang disimpan hanya hash
+       (SHA-256 + salt), bukan PIN. Membatalkan / membuka pesanan wajib PIN,
+       jadi pembeli lain tidak bisa mengubah pesanan orang lain. */
+    function sha256(ascii) {
+        function rr(v, n) { return (v >>> n) | (v << (32 - n)); }
+        var maxWord = Math.pow(2, 32);
+        var i, j, result = "";
+        var words = [];
+        var bitLen = ascii.length * 8;
+        var hash = [], k = [], pc = 0, comp = {};
+        for (var cand = 2; pc < 64; cand++) {
+            if (!comp[cand]) {
+                for (i = 0; i < 313; i += cand) comp[i] = cand;
+                hash[pc] = (Math.pow(cand, 0.5) * maxWord) | 0;
+                k[pc++] = (Math.pow(cand, 1 / 3) * maxWord) | 0;
+            }
+        }
+        ascii += "\x80";
+        while (ascii.length % 64 - 56) ascii += "\x00";
+        for (i = 0; i < ascii.length; i++) {
+            j = ascii.charCodeAt(i);
+            words[i >> 2] |= j << ((3 - i) % 4) * 8;
+        }
+        words[words.length] = (bitLen / maxWord) | 0;
+        words[words.length] = bitLen;
+        for (j = 0; j < words.length;) {
+            var w = words.slice(j, j += 16);
+            var old = hash;
+            hash = hash.slice(0, 8);
+            for (i = 0; i < 64; i++) {
+                var w15 = w[i - 15], w2 = w[i - 2];
+                var a = hash[0], e = hash[4];
+                var t1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i] +
+                    (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] +
+                    (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+                var t2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+                hash = [(t1 + t2) | 0].concat(hash);
+                hash[4] = (hash[4] + t1) | 0;
+            }
+            for (i = 0; i < 8; i++) hash[i] = (hash[i] + old[i]) | 0;
+        }
+        for (i = 0; i < 8; i++) {
+            for (j = 3; j + 1; j--) {
+                var b = (hash[i] >> (j * 8)) & 255;
+                result += (b < 16 ? "0" : "") + b.toString(16);
+            }
+        }
+        return result;
+    }
+
+    function randomSalt() {
+        var out = "";
+        try {
+            var arr = new Uint8Array(8);
+            (window.crypto || window.msCrypto).getRandomValues(arr);
+            for (var i = 0; i < arr.length; i++) out += (arr[i] < 16 ? "0" : "") + arr[i].toString(16);
+            return out;
+        } catch (e) {
+            for (var j = 0; j < 16; j++) out += Math.floor(Math.random() * 16).toString(16);
+            return out;
+        }
+    }
+
+    function pinHash(o, pin) {
+        return sha256(o.pinSalt + ":" + o.id + ":" + pin);
+    }
+
+    // Cek PIN + batasi percobaan: 5 kali salah -> pesanan dikunci 5 menit.
+    // Pemanggil harus sudah memanggil reloadMarketData().
+    function checkPin(o, pin) {
+        if (!o.pinHash) return { ok: false, msg: "Pesanan ini dibuat tanpa PIN, jadi tidak bisa diubah dari sini." };
+        var now = Date.now();
+        if (o.kunci && now < o.kunci) {
+            return { ok: false, locked: true,
+                msg: "Terlalu banyak PIN salah. Coba lagi dalam " + Math.ceil((o.kunci - now) / 60000) + " menit." };
+        }
+        if (pinHash(o, pin) === o.pinHash) {
+            if (o.gagal || o.kunci) {
+                o.gagal = 0;
+                o.kunci = 0;
+                saveList(OKEY, orders);
+            }
+            return { ok: true };
+        }
+        o.gagal = (o.gagal || 0) + 1;
+        var locked = false;
+        if (o.gagal >= 5) {
+            o.kunci = now + 5 * 60000;
+            o.gagal = 0;
+            locked = true;
+        }
+        saveList(OKEY, orders);
+        return { ok: false, locked: locked,
+            msg: locked ? "Terlalu banyak PIN salah. Pesanan dikunci 5 menit." : "PIN salah." };
+    }
+
+    var pinCtx = null;
+
+    function requirePin(id, action) {
+        reloadMarketData();
+        var o = orders.filter(function (x) { return x.id === id; })[0];
+        if (!o) { refreshMarketViews(); return; }
+        if (!o.pinHash) {
+            $("market-flash").textContent = "Pesanan ini dibuat tanpa PIN, jadi tidak bisa diubah dari sini.";
+            return;
+        }
+        pinCtx = { id: id, action: action };
+        $("pin-meta").textContent = "Pesanan " + o.id + " · " + o.nama;
+        $("pin-title").textContent = action === "delete" ? "PIN untuk Menghapus Pesanan" : "Masukkan PIN Pesanan";
+        $("pin-submit").textContent = action === "delete" ? "Hapus Pesanan" : "Batalkan Pesanan";
+        $("pin-input").value = "";
+        $("pin-error").hidden = true;
+        openDialog("pin-dialog");
+        setTimeout(function () { $("pin-input").focus(); }, 0);
+    }
+
+    function newOrderCode() {
+        var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        for (;;) {
+            var s = "FM-";
+            for (var i = 0; i < 6; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+            if (!orders.some(function (o) { return o.id === s; })) return s;
+        }
+    }
+
+    /* --- notifikasi untuk penjual --- */
+    function pendingCount() {
+        var me = sellerEmail();
+        if (!me) return 0;
+        return orders.filter(function (o) {
+            return o.status === "menunggu" && lc(o.sellerEmail) === me;
+        }).length;
+    }
+
+    function updateBadges() {
+        var n = pendingCount();
+        ["nav-badge", "menu-badge"].forEach(function (id) {
+            var b = $(id);
+            if (!b) return;
+            b.hidden = n === 0;
+            b.textContent = n;
+        });
+        var pill = $("seller-pending");
+        if (pill) {
+            pill.hidden = n === 0;
+            pill.textContent = n + " menunggu";
+        }
+        document.title = (n ? "(" + n + ") " : "") + BASE_TITLE;
+    }
+
+    var toastTimer = null;
+    function showToast(text) {
+        var t = $("toast");
+        if (!t) return;
+        $("toast-text").textContent = text;
+        t.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { t.hidden = true; }, 10000);
+    }
+    function hideToast() {
+        var t = $("toast");
+        if (t) t.hidden = true;
+    }
+
+    function sellerFlash(text) {
+        var f = $("seller-flash");
+        if (f) f.textContent = text;
+    }
+
+    /* --- kartu listing (publik & penjual) --- */
     function renderMarketInfo() {
         var info = $("market-info");
         if (!info) return;
@@ -983,17 +1276,86 @@
             txt = rec && rec.harga > 0
                 ? "Harga pakan pada catatan terakhir Anda (" + dmy(rec.tgl) + "): " +
                   rp(rec.harga) + "/kg. Bandingkan dengan harga langsung supplier di bawah."
-                : "Isi data di dashboard agar harga supplier bisa dibandingkan dengan harga pakan Anda.";
+                : "Harga langsung dari supplier, tanpa tengkulak. Bandingkan harga lalu pesan.";
         } else if (marketCat === "ayam") {
-            txt = rec && rec.ayam > 0 && rec.bobot > 0
-                ? "Estimasi biomassa dari catatan terakhir Anda: " + rec.ayam.toLocaleString("id-ID") +
-                  " ekor × " + num(rec.bobot, 2) + " kg ≈ " + num(rec.ayam * rec.bobot, 0) +
-                  " kg. Pasang listing untuk menjual langsung ke pembeli."
-                : "Pasang listing ayam panen Anda agar langsung terlihat pembeli, tanpa lewat tengkulak.";
+            txt = "Pesan ayam panen langsung dari peternak. Tanpa login: penjual akan menyetujui pesanan Anda.";
         } else {
-            txt = "Kotoran kandang bisa dijual sebagai pupuk organik untuk tambahan pendapatan. Pasang listing Anda sendiri.";
+            txt = "Pupuk organik dari kotoran kandang broiler. Tanpa login: penjual akan menyetujui pesanan Anda.";
         }
         info.textContent = txt;
+    }
+
+    function listingCard(m, rec, mode) {
+        var card = el("article", "market-card");
+
+        var top = el("div", "market-card-top");
+        top.appendChild(el("div", "market-icon", CAT_INFO[m.kat].ikon));
+        var badges = el("div", "market-badges");
+        badges.appendChild(el("span", "market-badge", "Direct to Buyer"));
+        var hemat = m.hargaTengkulak && m.hargaTengkulak > m.harga
+            ? Math.round((m.hargaTengkulak - m.harga) / m.hargaTengkulak * 100) : 0;
+        if (hemat > 0) badges.appendChild(el("span", "market-badge save", "Hemat " + hemat + "%"));
+        if (m.mine) badges.appendChild(el("span", "market-badge mine", "Milik Anda"));
+        else if (m.sampel) badges.appendChild(el("span", "market-badge sample", "Contoh"));
+        top.appendChild(badges);
+        card.appendChild(top);
+
+        var body = el("div", "market-card-body");
+        body.appendChild(el("h4", "", m.nama));
+        body.appendChild(el("div", "market-seller", m.penjual + " · 📍 " + m.lokasi));
+
+        var price = el("div", "market-price", rp(m.harga) + " ");
+        price.appendChild(el("small", "", "/kg"));
+        body.appendChild(price);
+
+        if (m.hargaTengkulak && m.hargaTengkulak > m.harga) {
+            var old = el("div", "market-old", "Via tengkulak ±");
+            old.appendChild(el("s", "", rp(m.hargaTengkulak) + "/kg"));
+            old.appendChild(document.createTextNode(" · hemat " + rp(m.hargaTengkulak - m.harga) + "/kg"));
+            body.appendChild(old);
+        }
+
+        var soldOut = isSoldOut(m);
+        body.appendChild(el("div", "market-meta", soldOut
+            ? "Stok habis"
+            : "Stok: " + num(m.stok, 0) + " kg · Min. order: " + num(m.minOrder, 0) + " kg"));
+        if (m.catatan) body.appendChild(el("div", "market-meta", m.catatan));
+
+        if (mode === "public" && m.kat === "pakan" && rec && rec.harga > 0) {
+            var diff = rec.harga - m.harga;
+            body.appendChild(el("div", "market-compare",
+                diff > 0 ? "Lebih murah " + rp(diff) + "/kg dari harga pakan terakhir Anda"
+                : diff < 0 ? "Lebih mahal " + rp(-diff) + "/kg dari harga pakan terakhir Anda"
+                : "Sama dengan harga pakan terakhir Anda"));
+        }
+
+        var act = el("div", "market-actions");
+        if (mode === "seller") {
+            var d = el("button", "btn-small btn-delete", "Hapus");
+            d.type = "button";
+            d.setAttribute("data-act", "del");
+            d.setAttribute("data-id", m.id);
+            act.appendChild(d);
+        } else {
+            var b = el("button", "btn btn-primary",
+                soldOut ? "Stok habis" : m.kat === "pakan" ? "Beli Langsung" : "Pesan Langsung");
+            b.type = "button";
+            b.disabled = soldOut;
+            b.setAttribute("data-act", "order");
+            b.setAttribute("data-id", m.id);
+            act.appendChild(b);
+            // Listing nyata: kontak penjual baru dibuka setelah pesanan disetujui.
+            if (m.sampel && m.kontak) {
+                var a = el("a", "btn btn-outline", "WhatsApp");
+                a.href = "https://wa.me/" + waNumber(m.kontak);
+                a.target = "_blank";
+                a.rel = "noopener";
+                act.appendChild(a);
+            }
+        }
+        body.appendChild(act);
+        card.appendChild(body);
+        return card;
     }
 
     function renderMarket() {
@@ -1017,105 +1379,185 @@
         if (!list.length) {
             grid.appendChild(el("p", "market-empty",
                 q ? "Tidak ada listing yang cocok dengan pencarian."
-                  : "Belum ada listing. Klik \"+ Pasang Listing\" untuk menambahkan."));
+                  : "Belum ada listing di kategori ini. Penjual bisa login untuk memasang listing."));
             return;
         }
-
         list.forEach(function (m) {
-            var card = el("article", "market-card");
-
-            var top = el("div", "market-card-top");
-            top.appendChild(el("div", "market-icon", CAT_INFO[m.kat].ikon));
-            var badges = el("div", "market-badges");
-            badges.appendChild(el("span", "market-badge", "Direct to Buyer"));
-            var hemat = m.hargaTengkulak && m.hargaTengkulak > m.harga
-                ? Math.round((m.hargaTengkulak - m.harga) / m.hargaTengkulak * 100) : 0;
-            if (hemat > 0) badges.appendChild(el("span", "market-badge save", "Hemat " + hemat + "%"));
-            if (m.mine) badges.appendChild(el("span", "market-badge mine", "Milik Anda"));
-            else if (m.sampel) badges.appendChild(el("span", "market-badge sample", "Contoh"));
-            top.appendChild(badges);
-            card.appendChild(top);
-
-            var body = el("div", "market-card-body");
-            body.appendChild(el("h4", "", m.nama));
-            body.appendChild(el("div", "market-seller", m.penjual + " · 📍 " + m.lokasi));
-
-            var price = el("div", "market-price", rp(m.harga) + " ");
-            price.appendChild(el("small", "", "/kg"));
-            body.appendChild(price);
-
-            if (m.hargaTengkulak && m.hargaTengkulak > m.harga) {
-                var old = el("div", "market-old", "Via tengkulak ±");
-                old.appendChild(el("s", "", rp(m.hargaTengkulak) + "/kg"));
-                old.appendChild(document.createTextNode(" · hemat " + rp(m.hargaTengkulak - m.harga) + "/kg"));
-                body.appendChild(old);
-            }
-
-            body.appendChild(el("div", "market-meta",
-                "Stok: " + num(m.stok, 0) + " kg · Min. order: " + num(m.minOrder, 0) + " kg"));
-            if (m.catatan) body.appendChild(el("div", "market-meta", m.catatan));
-
-            if (m.kat === "pakan" && rec && rec.harga > 0) {
-                var diff = rec.harga - m.harga;
-                body.appendChild(el("div", "market-compare",
-                    diff > 0 ? "Lebih murah " + rp(diff) + "/kg dari harga pakan terakhir Anda"
-                    : diff < 0 ? "Lebih mahal " + rp(-diff) + "/kg dari harga pakan terakhir Anda"
-                    : "Sama dengan harga pakan terakhir Anda"));
-            }
-
-            var act = el("div", "market-actions");
-            var b = el("button", "btn btn-primary", m.kat === "pakan" ? "Beli Langsung" : "Pesan Langsung");
-            b.type = "button";
-            b.setAttribute("data-act", "order");
-            b.setAttribute("data-id", m.id);
-            act.appendChild(b);
-            if (m.kontak) {
-                var a = el("a", "btn btn-outline", "WhatsApp");
-                a.href = "https://wa.me/" + m.kontak;
-                a.target = "_blank";
-                a.rel = "noopener";
-                act.appendChild(a);
-            }
-            if (m.mine) {
-                var d = el("button", "btn-small btn-delete", "Hapus");
-                d.type = "button";
-                d.setAttribute("data-act", "del");
-                d.setAttribute("data-id", m.id);
-                act.appendChild(d);
-            }
-            body.appendChild(act);
-            card.appendChild(body);
-            grid.appendChild(card);
+            grid.appendChild(listingCard(m, rec, "public"));
         });
     }
 
+    /* --- pesanan milik pembeli (browser ini) --- */
     function renderOrders() {
         var tbody = $("tabel-pesanan");
         if (!tbody) return;
         tbody.innerHTML = "";
-        if (!orders.length) {
-            emptyRow(tbody, 8, "Belum ada pesanan.");
+        var mine = orders.filter(function (o) { return myOrderIds.indexOf(o.id) !== -1; });
+        if (!mine.length) {
+            emptyRow(tbody, 9, "Belum ada pesanan.");
             return;
         }
-        orders.slice().reverse().forEach(function (o) {
+        mine.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+        mine.forEach(function (o) {
             var tr = document.createElement("tr");
             tr.appendChild(td(dmy(o.tgl)));
+            tr.appendChild(td(o.id));
             tr.appendChild(td(o.nama));
             tr.appendChild(td(o.penjual));
             tr.appendChild(td(num(o.jumlah, 0) + " kg"));
             tr.appendChild(td(rp(o.total)));
             tr.appendChild(td(o.hemat > 0 ? rp(o.hemat) : "—"));
-            var tds = document.createElement("td");
-            tds.appendChild(el("span", "status status-warning", o.status));
-            tr.appendChild(tds);
+            tr.appendChild(statusCell(o));
+
             var ta = document.createElement("td");
-            var btn = el("button", "btn-small btn-delete", "Hapus");
-            btn.type = "button";
-            btn.setAttribute("data-oid", o.id);
-            ta.appendChild(btn);
+            var wrap = el("div", "action-buttons");
+            if (o.status === "menunggu") {
+                var c = el("button", "btn-small btn-delete", "Batalkan");
+                c.type = "button";
+                c.setAttribute("data-cancel", o.id);
+                wrap.appendChild(c);
+            } else {
+                if (o.status === "disetujui" && waNumber(o.kontak)) {
+                    var w = el("button", "btn-small btn-approve", "Hubungi Penjual");
+                    w.type = "button";
+                    w.setAttribute("data-wa-seller", o.id);
+                    wrap.appendChild(w);
+                }
+            }
+            var d = el("button", "btn-small btn-delete", "Hapus");
+            d.type = "button";
+            d.setAttribute("data-del", o.id);
+            wrap.appendChild(d);
+            ta.appendChild(wrap);
             tr.appendChild(ta);
             tbody.appendChild(tr);
         });
+    }
+
+    /* --- panel penjual: pesanan masuk + listing saya --- */
+    function renderSeller() {
+        var tbody = $("tabel-pesanan-masuk");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        var me = sellerEmail();
+
+        var list = me ? orders.filter(function (o) { return lc(o.sellerEmail) === me; }) : [];
+        list.sort(function (a, b) {
+            var pa = a.status === "menunggu" ? 0 : 1;
+            var pb = b.status === "menunggu" ? 0 : 1;
+            return pa !== pb ? pa - pb : (b.ts || 0) - (a.ts || 0);
+        });
+
+        if (!list.length) {
+            emptyRow(tbody, 7, "Belum ada pesanan masuk.");
+        }
+        list.forEach(function (o) {
+            var tr = document.createElement("tr");
+            if (o.status === "menunggu") tr.className = "row-pending";
+
+            tr.appendChild(tdStack(dmy(o.tgl), [o.id]));
+            tr.appendChild(tdStack(o.pembeli, [
+                o.pembeliWa ? "WA: " + o.pembeliWa : "",
+                o.catatan ? "Catatan: " + o.catatan : ""
+            ]));
+            tr.appendChild(td(o.nama));
+            tr.appendChild(td(num(o.jumlah, 0) + " kg"));
+            tr.appendChild(td(rp(o.total)));
+            tr.appendChild(statusCell(o));
+
+            var ta = document.createElement("td");
+            var wrap = el("div", "action-buttons");
+            if (o.status === "menunggu") {
+                var ok = el("button", "btn-small btn-approve", "Setujui");
+                ok.type = "button";
+                ok.setAttribute("data-decide", "approve");
+                ok.setAttribute("data-oid", o.id);
+                var no = el("button", "btn-small btn-delete", "Tolak");
+                no.type = "button";
+                no.setAttribute("data-decide", "reject");
+                no.setAttribute("data-oid", o.id);
+                wrap.appendChild(ok);
+                wrap.appendChild(no);
+            } else if (o.status === "disetujui" && waNumber(o.pembeliWa)) {
+                var w = el("button", "btn-small btn-approve", "WA Pembeli");
+                w.type = "button";
+                w.setAttribute("data-wa-buyer", o.id);
+                wrap.appendChild(w);
+            } else {
+                wrap.appendChild(document.createTextNode("—"));
+            }
+            ta.appendChild(wrap);
+            tr.appendChild(ta);
+            tbody.appendChild(tr);
+        });
+
+        var grid = $("seller-grid");
+        if (grid) {
+            grid.innerHTML = "";
+            var mine = allListings().filter(function (m) { return m.mine; });
+            if (!mine.length) {
+                grid.appendChild(el("p", "market-empty",
+                    "Anda belum memasang listing. Klik \"+ Pasang Listing\" untuk mulai berjualan."));
+            }
+            mine.forEach(function (m) {
+                grid.appendChild(listingCard(m, null, "seller"));
+            });
+        }
+        updateBadges();
+    }
+
+    function refreshMarketViews() {
+        renderMarket();
+        renderOrders();
+        renderSeller();
+    }
+
+    function syncMarketButton() {
+        var b = $("market-add");
+        if (!b) return;
+        b.textContent = currentSeller() ? "Kelola Toko Saya →" : "🔑 Login Penjual";
+    }
+
+    /* --- penjual menyetujui / menolak --- */
+    function decideOrder(id, approve) {
+        reloadMarketData();
+        var me = sellerEmail();
+        var o = orders.filter(function (x) { return x.id === id; })[0];
+        if (!me || !o || lc(o.sellerEmail) !== me) return;
+
+        if (o.status !== "menunggu") {
+            sellerFlash("Pesanan " + o.id + " sudah berstatus: " + (ORDER_STATUS[o.status] || {}).label + ".");
+            refreshMarketViews();
+            return;
+        }
+
+        var msg = approve
+            ? "Setujui pesanan " + o.id + " dari " + o.pembeli + "?\nStok berkurang " + num(o.jumlah, 0) + " kg."
+            : "Tolak pesanan " + o.id + " dari " + o.pembeli + "?";
+        if (!confirm(msg)) return;
+
+        if (approve) {
+            var l = marketUser.filter(function (x) { return x.id === o.listingId; })[0];
+            if (!l) {
+                alert("Listing untuk pesanan ini sudah dihapus.");
+                return;
+            }
+            if (o.jumlah > l.stok) {
+                alert("Stok listing tinggal " + num(l.stok, 0) + " kg, tidak cukup untuk pesanan ini.");
+                return;
+            }
+            l.stok -= o.jumlah;
+            if (l.stok > 0 && l.minOrder > l.stok) l.minOrder = l.stok;
+            saveList(MKEY, marketUser);
+        }
+
+        o.status = approve ? "disetujui" : "ditolak";
+        stampOrder(o, "penjual");
+        saveList(OKEY, orders);
+        refreshMarketViews();
+        sellerFlash(approve
+            ? "Pesanan " + o.id + " disetujui. Klik \"WA Pembeli\" untuk menghubungi " + o.pembeli + "."
+            : "Pesanan " + o.id + " ditolak.");
     }
 
     /* --- dialog helper --- */
@@ -1130,7 +1572,7 @@
         else d.removeAttribute("open");
     }
 
-    /* --- pesan langsung --- */
+    /* --- pesan langsung (pembeli, tanpa login) --- */
     function updateOrderSummary() {
         if (!orderTarget) return;
         var qty = parseFloat($("order-jumlah").value) || 0;
@@ -1143,7 +1585,7 @@
 
     function openOrder(id) {
         var m = findListing(id);
-        if (!m) return;
+        if (!m || isSoldOut(m)) return;
         orderTarget = m;
         $("order-title").textContent = (m.kat === "pakan" ? "Beli: " : "Pesan: ") + m.nama;
         $("order-meta").textContent = m.penjual + " · 📍 " + m.lokasi + " · " + rp(m.harga) +
@@ -1154,6 +1596,13 @@
         $("order-jumlah").value = m.minOrder;
         $("order-catatan").value = "";
         $("order-error").hidden = true;
+        $("order-wa").value = "";
+        $("order-pin").value = "";
+        $("order-submit").textContent = m.sampel ? "Simpan Simulasi Pesanan" : "Kirim Pesanan ke Penjual";
+        $("order-send-note").textContent = m.sampel
+            ? "Ini listing contoh, jadi pesanan hanya simulasi dan tidak diteruskan ke penjual."
+            : "Pesanan Anda dikirim sebagai notifikasi ke " + m.penjual +
+              ". Anda tidak perlu login; penjual akan menyetujui lalu menghubungi WhatsApp Anda.";
         updateOrderSummary();
         openDialog("order-dialog");
         setTimeout(function () { $("order-nama").focus(); }, 0);
@@ -1168,38 +1617,71 @@
 
     $("order-form").addEventListener("submit", function (e) {
         e.preventDefault();
-        var m = orderTarget;
-        if (!m) return;
+        if (!orderTarget) return;
+
         var nama = $("order-nama").value.trim();
+        var waBeli = $("order-wa").value.trim();
         var qty = parseFloat($("order-jumlah").value);
+
         if (!nama) { orderError("Nama pembeli wajib diisi."); return; }
+        if (waNumber(waBeli).length < 10) {
+            orderError("Nomor WhatsApp wajib diisi agar penjual bisa menghubungi Anda.");
+            return;
+        }
+        var pin = $("order-pin").value.trim();
+        if (!/^\d{4,6}$/.test(pin)) {
+            orderError("Buat PIN pesanan 4–6 angka. PIN dipakai untuk membatalkan atau membuka pesanan.");
+            return;
+        }
         if (!(qty > 0)) { orderError("Masukkan jumlah pesanan."); return; }
+
+        // Baca ulang: stok / listing bisa berubah sejak dialog dibuka.
+        reloadMarketData();
+        var m = findListing(orderTarget.id);
+        if (!m) { orderError("Listing ini sudah tidak tersedia."); return; }
+        if (isSoldOut(m)) { orderError("Maaf, stok sudah habis."); return; }
         if (qty < m.minOrder) { orderError("Jumlah minimal " + num(m.minOrder, 0) + " kg."); return; }
         if (qty > m.stok) { orderError("Jumlah melebihi stok (" + num(m.stok, 0) + " kg)."); return; }
 
         var hemat = m.hargaTengkulak > m.harga ? (m.hargaTengkulak - m.harga) * qty : 0;
-        orders.push({
-            id: Date.now() + "-" + Math.floor(Math.random() * 1000),
+        var o = {
+            id: newOrderCode(),
+            ts: Date.now(),
             tgl: todayISO(),
+            listingId: m.id,
+            kat: m.kat,
             nama: m.nama,
             penjual: m.penjual,
+            sellerEmail: m.sampel ? "" : lc(m.sellerEmail),
+            kontak: m.kontak || "",
             jumlah: qty,
+            harga: m.harga,
             total: qty * m.harga,
             hemat: hemat,
             pembeli: nama,
+            pembeliWa: waBeli,
             catatan: $("order-catatan").value.trim(),
-            status: "Menunggu konfirmasi"
-        });
+            status: m.sampel ? "contoh" : "menunggu"
+        };
+        o.pinSalt = randomSalt();
+        o.pinHash = pinHash(o, pin);
+        orders.push(o);
         saveList(OKEY, orders);
+        myOrderIds.push(o.id);
+        saveSessionList(MYKEY, myOrderIds);
+
         closeDialog("order-dialog");
-        renderOrders();
-        $("market-flash").textContent = "Pesanan " + m.nama + " (" + num(qty, 0) +
-            " kg) terkirim ke " + m.penjual + ". Status: menunggu konfirmasi.";
+        refreshMarketViews();
+        $("market-flash").textContent = m.sampel
+            ? "Ini listing contoh, jadi pesanan hanya simulasi dan tidak diteruskan ke penjual."
+            : "Pesanan terkirim ke " + m.penjual + ". Kode pesanan Anda: " + o.id +
+              ". Simpan kode dan PIN Anda (PIN tidak bisa dilihat lagi). Tunggu persetujuan penjual.";
         $("market-orders").scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
 
-    /* --- pasang listing --- */
+    /* --- pasang listing (khusus penjual) --- */
     function openListing() {
+        if (!currentSeller()) return;
         $("listing-form").reset();
         $("listing-error").hidden = true;
         var rec = latestRecord();
@@ -1219,25 +1701,32 @@
 
     $("listing-form").addEventListener("submit", function (e) {
         e.preventDefault();
+        var seller = currentSeller();
+        if (!seller) { listingError("Sesi login berakhir. Silakan login lagi."); return; }
+
         var nama = $("lst-nama").value.trim();
         var lokasi = $("lst-lokasi").value.trim();
         var jumlah = parseFloat($("lst-jumlah").value);
         var harga = parseFloat($("lst-harga").value);
-        var kontak = $("lst-kontak").value.replace(/\D/g, "");
+        var kontak = waNumber($("lst-kontak").value);
 
         if (!nama) { listingError("Nama produk wajib diisi."); return; }
         if (!lokasi) { listingError("Lokasi wajib diisi."); return; }
         if (!(jumlah > 0)) { listingError("Jumlah tersedia harus lebih dari 0."); return; }
         if (!(harga > 0)) { listingError("Harga harus lebih dari 0."); return; }
         if (kontak && !/^62\d{8,13}$/.test(kontak)) {
-            listingError("Nomor WhatsApp harus berformat 628xxxxxxxxxx.");
+            listingError("Nomor WhatsApp tidak valid. Contoh: 081234567890.");
             return;
         }
 
         var kat = $("lst-kat").value === "pupuk" ? "pupuk" : "ayam";
+        reloadMarketData();
         marketUser.push({
             id: "u-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
-            kat: kat, nama: nama, penjual: "Anda", lokasi: lokasi,
+            kat: kat, nama: nama,
+            penjual: seller.name || seller.email,
+            sellerEmail: lc(seller.email),
+            lokasi: lokasi,
             harga: harga, hargaTengkulak: null, stok: jumlah,
             minOrder: Math.min(jumlah, kat === "ayam" ? 100 : 25),
             catatan: "", kontak: kontak
@@ -1246,9 +1735,34 @@
         closeDialog("listing-dialog");
         marketCat = kat;
         syncMarketTabs();
-        renderMarket();
-        $("market-flash").textContent = "Listing \"" + nama + "\" berhasil dipasang.";
+        refreshMarketViews();
+        sellerFlash("Listing \"" + nama + "\" berhasil dipasang dan sudah tampil di marketplace.");
     });
+
+    function deleteListing(id) {
+        reloadMarketData();
+        var me = sellerEmail();
+        var l = marketUser.filter(function (x) { return x.id === id; })[0];
+        if (!me || !l || lc(l.sellerEmail) !== me) return;
+
+        var pend = orders.filter(function (o) {
+            return o.listingId === id && o.status === "menunggu";
+        });
+        var msg = pend.length
+            ? "Listing ini punya " + pend.length + " pesanan yang menunggu. Jika dihapus, pesanan tersebut otomatis ditolak. Hapus?"
+            : "Hapus listing ini?";
+        if (!confirm(msg)) return;
+
+        pend.forEach(function (o) {
+            o.status = "ditolak";
+            o.alasan = "Listing dihapus penjual";
+            stampOrder(o, "sistem");
+        });
+        if (pend.length) saveList(OKEY, orders);
+        marketUser = marketUser.filter(function (x) { return x.id !== id; });
+        saveList(MKEY, marketUser);
+        refreshMarketViews();
+    }
 
     function syncMarketTabs() {
         Array.prototype.forEach.call(document.querySelectorAll(".market-tab"), function (b) {
@@ -1272,30 +1786,143 @@
             renderMarket();
         });
 
-        $("market-add").addEventListener("click", openListing);
-
-        $("market-grid").addEventListener("click", function (e) {
-            var b = e.target.closest("button[data-act]");
-            if (!b) return;
-            var id = b.getAttribute("data-id");
-            if (b.getAttribute("data-act") === "order") {
-                openOrder(id);
-            } else if (b.getAttribute("data-act") === "del") {
-                if (!confirm("Hapus listing ini?")) return;
-                marketUser = marketUser.filter(function (x) { return x.id !== id; });
-                saveList(MKEY, marketUser);
-                renderMarket();
+        // Tombol di marketplace publik: pembeli tidak melihat fitur jual, penjual diarahkan login.
+        $("market-add").addEventListener("click", function () {
+            if (currentSeller()) {
+                navigateApp("marketplace");
+            } else {
+                loginRedirect = "marketplace";
+                openLogin();
             }
         });
 
+        $("market-grid").addEventListener("click", function (e) {
+            var b = e.target.closest("button[data-act='order']");
+            if (b) openOrder(b.getAttribute("data-id"));
+        });
+
+        // Aksi pembeli pada tabel "Pesanan Anda"
         $("tabel-pesanan").addEventListener("click", function (e) {
-            var b = e.target.closest("button[data-oid]");
-            if (!b) return;
-            if (!confirm("Hapus pesanan ini?")) return;
-            var id = b.getAttribute("data-oid");
-            orders = orders.filter(function (x) { return x.id !== id; });
-            saveList(OKEY, orders);
+            // Membatalkan pesanan wajib PIN, bukan sekadar "pesanan ada di browser ini".
+            var c = e.target.closest("button[data-cancel]");
+            if (c) {
+                requirePin(c.getAttribute("data-cancel"), "cancel");
+                return;
+            }
+            var dl = e.target.closest("button[data-del]");
+            if (dl) {
+                requirePin(dl.getAttribute("data-del"), "delete");
+                return;
+            }
+            var w = e.target.closest("button[data-wa-seller]");
+            if (w) {
+                var wid = w.getAttribute("data-wa-seller");
+                var ow = orders.filter(function (x) { return x.id === wid; })[0];
+                if (ow) openWA(waLink(ow.kontak, buyerMessage(ow)));
+                return;
+            }
+        });
+
+        // Konfirmasi PIN untuk membatalkan pesanan
+        $("pin-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+            var ctx = pinCtx;
+            if (!ctx) { closeDialog("pin-dialog"); return; }
+            reloadMarketData();
+            var o = orders.filter(function (x) { return x.id === ctx.id; })[0];
+            if (!o) {
+                pinCtx = null;
+                closeDialog("pin-dialog");
+                refreshMarketViews();
+                return;
+            }
+            var r = checkPin(o, $("pin-input").value.trim());
+            if (!r.ok) {
+                $("pin-error").textContent = r.msg;
+                $("pin-error").hidden = false;
+                $("pin-input").value = "";
+                return;
+            }
+            pinCtx = null;
+            closeDialog("pin-dialog");
+            if (ctx.action === "delete") {
+                orders = orders.filter(function (x) { return x.id !== o.id; });
+                myOrderIds = myOrderIds.filter(function (x) { return x !== o.id; });
+                saveList(OKEY, orders);
+                saveSessionList(MYKEY, myOrderIds);
+                $("market-flash").textContent = "Pesanan " + o.id + " dihapus.";
+                refreshMarketViews();
+                return;
+            }
+            if (o.status === "menunggu") {
+                o.status = "dibatalkan";
+                stampOrder(o, "pembeli");
+                saveList(OKEY, orders);
+                $("market-flash").textContent = "Pesanan " + o.id + " dibatalkan.";
+            } else {
+                $("market-flash").textContent = "Pesanan " + o.id + " sudah berstatus: " +
+                    ((ORDER_STATUS[o.status] || {}).label || o.status) + ".";
+            }
+            refreshMarketViews();
+        });
+
+        // Sembunyikan & kunci daftar: kosongkan tampilan di tab ini (berguna di perangkat bersama)
+        $("orders-lock").addEventListener("click", function () {
+            myOrderIds = [];
+            saveSessionList(MYKEY, myOrderIds);
+            $("market-flash").textContent = "Daftar pesanan disembunyikan dan dikunci. Catatan tetap tersimpan; buka lagi dengan kode pesanan dan PIN.";
             renderOrders();
+        });
+
+        // Buka pesanan: kode + PIN harus cocok
+        $("track-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+            var kode = $("track-kode").value.trim().toUpperCase();
+            var pin = $("track-pin").value.trim();
+            var msg;
+            if (!kode || !pin) {
+                msg = "Isi kode pesanan dan PIN yang Anda buat saat memesan.";
+            } else {
+                reloadMarketData();
+                var o = orders.filter(function (x) { return x.id === kode; })[0];
+                var r = o ? checkPin(o, pin) : { ok: false };
+                if (!r.ok) {
+                    // pesan sama untuk kode salah / PIN salah, agar kode orang lain tidak bisa ditebak
+                    msg = r.locked ? r.msg : "Kode atau PIN tidak cocok. Periksa lagi.";
+                } else if (myOrderIds.indexOf(o.id) !== -1) {
+                    msg = "Pesanan " + o.id + " sudah ada di daftar Anda.";
+                } else {
+                    myOrderIds.push(o.id);
+                    saveSessionList(MYKEY, myOrderIds);
+                    $("track-kode").value = "";
+                    $("track-pin").value = "";
+                    msg = "Pesanan " + o.id + " berhasil dibuka di daftar Anda.";
+                }
+            }
+            $("market-flash").textContent = msg;
+            refreshMarketViews();
+        });
+
+        // Panel penjual
+        $("seller-add").addEventListener("click", openListing);
+
+        $("seller-grid").addEventListener("click", function (e) {
+            var b = e.target.closest("button[data-act='del']");
+            if (b) deleteListing(b.getAttribute("data-id"));
+        });
+
+        $("tabel-pesanan-masuk").addEventListener("click", function (e) {
+            var d = e.target.closest("button[data-decide]");
+            if (d) {
+                decideOrder(d.getAttribute("data-oid"), d.getAttribute("data-decide") === "approve");
+                return;
+            }
+            var w = e.target.closest("button[data-wa-buyer]");
+            if (w) {
+                var id = w.getAttribute("data-wa-buyer");
+                var o = orders.filter(function (x) { return x.id === id; })[0];
+                if (o) openWA(waLink(o.pembeliWa, approvalMessage(o)));
+            }
         });
 
         Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function (b) {
@@ -1304,8 +1931,28 @@
             });
         });
 
-        renderMarket();
-        renderOrders();
+        // Toast notifikasi
+        $("toast-go").addEventListener("click", function () {
+            hideToast();
+            navigateApp("marketplace");
+        });
+        $("toast-x").addEventListener("click", hideToast);
+
+        // Notifikasi langsung: saat pembeli memesan di tab/jendela lain (browser yang sama),
+        // panel penjual ikut diperbarui dan toast muncul tanpa refresh.
+        window.addEventListener("storage", function (e) {
+            if (e.key !== MKEY && e.key !== OKEY && e.key !== MYKEY) return;
+            var before = pendingCount();
+            reloadMarketData();
+            refreshMarketViews();
+            var after = pendingCount();
+            if (after > before) {
+                showToast("🔔 Pesanan baru masuk! " + after + " pesanan menunggu persetujuan Anda.");
+            }
+        });
+
+        refreshMarketViews();
+        syncMarketButton();
     }
 
     /* ---------- Inisialisasi ---------- */
@@ -1323,7 +1970,6 @@
     renderSuppliers();
     preview();
     render(null);
-    initMarket();
 
     /* ---------- Login & Akses Dashboard ----------
        CATATAN: autentikasi ini berjalan di browser saja (demo, tanpa backend).
@@ -1331,15 +1977,14 @@
 
     // Isi dengan OAuth Client ID dari Google Cloud Console agar login Google aktif.
     // Contoh: "1234567890-abc123.apps.googleusercontent.com"
-    var GOOGLE_CLIENT_ID = "";
+    var GOOGLE_CLIENT_ID = "980057217867-iehgn8rcij9r5ikgraiokoga9q57ke58.apps.googleusercontent.com";
 
-    var SESSION_KEY = "feedmatrix.session.v2";   // sessionStorage: {type, name, email}
-    var USERS_KEY = "feedmatrix.users.v1";       // localStorage: akun email
 
     var loginPage = $("login-page");
     var btnLogin = $("btn-login");
     var dashboard = $("dashboard");
     var authMode = "masuk";
+    var loginRedirect = "menu";   // tujuan setelah login: "menu" atau "marketplace" (Toko Saya)
     var googleReady = false;
 
     /* --- session --- */
@@ -1413,6 +2058,10 @@
             $("userbar-action").textContent = act;
             $("menu-greeting").textContent = greet;
         }
+        $("demo-exit").hidden = !(s && s.type === "demo");
+
+        syncMarketButton();
+        refreshMarketViews();
     }
 
     /* --- halaman aplikasi: menu / dashboard / marketplace --- */
@@ -1428,8 +2077,7 @@
         "#live-kandang": "dashboard",
         "#grafik": "dashboard",
         "#peringatan": "dashboard",
-        "#riwayat": "dashboard",
-        "#marketplace": "marketplace"
+        "#riwayat": "dashboard"
     };
     var LANDING_IDS = ["navbar"];
 
@@ -1453,8 +2101,8 @@
         if (view === "dashboard") {
             setTimeout(function () { if (feedChart) feedChart.resize(); }, 50);
         } else if (view === "marketplace") {
-            renderMarket();
-            renderOrders();
+            reloadMarketData();
+            refreshMarketViews();
         }
         window.scrollTo(0, 0);
     }
@@ -1470,15 +2118,52 @@
         else window.scrollTo(0, 0);
     }
 
+    /* --- halaman metodologi (peternak / pembeli) --- */
+    var methodPage = $("method-page");
+
+    function setMethodTab(who) {
+        Array.prototype.forEach.call(document.querySelectorAll(".method-tab"), function (t) {
+            var on = t.getAttribute("data-who") === who;
+            t.classList.toggle("active", on);
+            t.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        $("method-peternak").hidden = who !== "peternak";
+        $("method-pembeli").hidden = who !== "pembeli";
+    }
+    function showMethod(who) {
+        setMethodTab(who);
+        if (methodPage.hidden) methodPage.scrollTop = 0;
+        methodPage.hidden = false;
+        document.body.classList.add("method-open");
+    }
+    function hideMethod() {
+        methodPage.hidden = true;
+        document.body.classList.remove("method-open");
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".method-tab"), function (t) {
+        t.addEventListener("click", function () {
+            var who = t.getAttribute("data-who");
+            history.replaceState(null, "", "#metodologi/" + who);
+            setMethodTab(who);
+            methodPage.scrollTop = 0;
+        });
+    });
+
     function route() {
         var h = location.hash;
+
+        if (h.indexOf("#metodologi") === 0) showMethod(h === "#metodologi/pembeli" ? "pembeli" : "peternak");
+        else if (!methodPage.hidden) hideMethod();
 
         if (h === "#login" && !isLoggedIn()) showLogin();
         else if (!loginPage.hidden) hideLogin();
 
         var view = APP_ROUTES[h];
         if (view) {
-            if (!canViewDashboard()) {
+            // Toko Saya khusus penjual yang login; dashboard boleh lewat mode demo.
+            var allowed = view === "marketplace" ? isLoggedIn() : canViewDashboard();
+            if (!allowed) {
+                if (view === "marketplace") loginRedirect = "marketplace";
                 history.replaceState(null, "", location.pathname + location.search);
                 hideApp();
                 openLogin();
@@ -1518,6 +2203,10 @@
 
     /* --- buka/tutup halaman login --- */
     function showLogin() {
+        if (loginPage.hidden) {
+            $("login-form").reset();
+            setMode("masuk");
+        }
         loginPage.hidden = false;
         document.body.classList.add("login-open");
         $("login-error").hidden = true;
@@ -1543,7 +2232,15 @@
         $("login-form").reset();
         closeLogin();
         updateUI();
-        goToApp();
+        var target = loginRedirect;
+        loginRedirect = "menu";
+        navigateApp(target);
+
+        // Beri tahu penjual jika ada pesanan yang menunggu
+        reloadMarketData();
+        refreshMarketViews();
+        var n = pendingCount();
+        if (n) showToast("🔔 Ada " + n + " pesanan menunggu persetujuan Anda.");
     }
 
     /* --- tab Masuk / Daftar --- */
@@ -1566,28 +2263,59 @@
         el.hidden = false;
     }
 
-    /* --- submit email --- */
+    /* --- submit email ---
+       Jika email/password salah: pesan error tampil, kolom password
+       otomatis dikosongkan dan difokuskan, sehingga bisa langsung
+       diketik ulang tanpa refresh halaman. */
+    var loginBusy = false;
+
+    function retryPassword() {
+        var p = $("login-pass");
+        var box = p.parentNode;
+        p.value = "";
+        box.classList.add("has-error");
+        box.classList.remove("shake");
+        void box.offsetWidth;          // restart animasi
+        box.classList.add("shake");
+        p.focus();
+    }
+
+    function clearLoginError() {
+        $("login-error").hidden = true;
+        $("login-pass").parentNode.classList.remove("has-error");
+    }
+    ["login-email", "login-pass", "login-nama"].forEach(function (id) {
+        $(id).addEventListener("input", clearLoginError);
+    });
+
     $("login-form").addEventListener("submit", function (e) {
         e.preventDefault();
+        if (loginBusy) return;
+
         var email = $("login-email").value.trim().toLowerCase();
         var pass = $("login-pass").value;
         var nama = $("login-nama").value.trim();
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             showError("Masukkan alamat email yang valid.");
+            $("login-email").focus();
             return;
         }
         if (pass.length < 6) {
             showError("Password minimal 6 karakter.");
+            retryPassword();
             return;
         }
+
+        loginBusy = true;
+        $("login-submit").disabled = true;
 
         hashPass(pass).then(function (h) {
             var users = getUsers();
             var found = users.filter(function (u) { return u.email === email; })[0];
 
             if (authMode === "daftar") {
-                if (!nama) { showError("Nama wajib diisi."); return; }
+                if (!nama) { showError("Nama wajib diisi."); $("login-nama").focus(); return; }
                 if (found) { showError("Email sudah terdaftar. Silakan masuk."); return; }
                 users.push({ name: nama, email: email, hash: h });
                 saveUsers(users);
@@ -1595,12 +2323,20 @@
                 afterLogin();
             } else {
                 if (!found || found.hash !== h) {
-                    showError("Email atau password salah.");
+                    showError("Email atau password salah. Silakan ketik ulang password Anda.");
+                    retryPassword();
                     return;
                 }
                 setSession({ type: "email", name: found.name, email: email });
                 afterLogin();
             }
+        }).catch(function () {
+            showError("Terjadi kesalahan saat masuk. Silakan coba lagi.");
+            retryPassword();
+        }).then(function () {
+            // selalu aktifkan lagi tombol, apa pun hasilnya
+            loginBusy = false;
+            $("login-submit").disabled = false;
         });
     });
 
@@ -1680,6 +2416,7 @@
     $("login-demo-link").addEventListener("click", function (e) {
         e.preventDefault();
         setSession({ type: "demo" });
+        loginRedirect = "menu";
         closeLogin();
         goToApp();
     });
@@ -1706,7 +2443,7 @@
             openLogin();
             return;
         }
-        navigateApp(view, href === "#dashboard" || href === "#marketplace" ? "" : href.slice(1));
+        navigateApp(view, href === "#dashboard" ? "" : href.slice(1));
     });
 
     window.addEventListener("hashchange", route);
@@ -1714,8 +2451,106 @@
     $("login-close").addEventListener("click", closeLogin);
     document.addEventListener("keydown", function (e) {
         if (e.key === "Escape" && !loginPage.hidden) closeLogin();
+        else if (e.key === "Escape" && !methodPage.hidden) location.hash = "#edukasi";
     });
 
+    /* --- menu hamburger (tampilan HP) --- */
+    var navToggle = $("nav-toggle");
+    var navMenu = $("nav-menu");
+    function setNav(open) {
+        navMenu.classList.toggle("open", open);
+        navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+        navToggle.setAttribute("aria-label", open ? "Tutup menu" : "Buka menu");
+        navToggle.textContent = open ? "✕" : "☰";
+    }
+    navToggle.addEventListener("click", function () { setNav(!navMenu.classList.contains("open")); });
+    navMenu.addEventListener("click", function (e) { if (e.target.closest("a")) setNav(false); });
+
+    /* --- keluar dari mode demo --- */
+    $("demo-exit").addEventListener("click", function () {
+        setSession(null);
+        history.pushState(null, "", "#home");
+        updateUI();
+        route();
+    });
+
+    /* --- mode gelap --- */
+    function applyTheme(t) {
+        document.documentElement.setAttribute("data-theme", t);
+        Array.prototype.forEach.call(document.querySelectorAll(".theme-toggle"), function (b) {
+            b.textContent = t === "dark" ? "☀️" : "🌙";
+            b.setAttribute("aria-pressed", t === "dark" ? "true" : "false");
+        });
+        if (window.Chart) {
+            Chart.defaults.color = t === "dark" ? "#cbbfe0" : "#666666";
+            Chart.defaults.borderColor = t === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)";
+            [feedChart, eduChart].forEach(function (c) { if (c) c.update(); });
+        }
+    }
+    var savedTheme = null;
+    try { savedTheme = localStorage.getItem("fm-theme"); } catch (e) {}
+    applyTheme(savedTheme || (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+    Array.prototype.forEach.call(document.querySelectorAll(".theme-toggle"), function (b) {
+        b.addEventListener("click", function () {
+            var t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            applyTheme(t);
+            try { localStorage.setItem("fm-theme", t); } catch (e) {}
+        });
+    });
+
+    /* --- galeri slide otomatis --- */
+    (function () {
+        var box = $("slider");
+        var track = $("slider-track");
+        if (!box || !track) return;
+        var slides = track.children;
+        var dotsBox = $("slider-dots");
+        var idx = 0, timer = null, x0 = null;
+        var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        var dots = [];
+        for (var i = 0; i < slides.length; i++) {
+            (function (n) {
+                var d = document.createElement("button");
+                d.type = "button";
+                d.className = "slider-dot";
+                d.setAttribute("aria-label", "Ke gambar " + (n + 1));
+                d.addEventListener("click", function () { go(n); restart(); });
+                dotsBox.appendChild(d);
+                dots.push(d);
+            })(i);
+        }
+        function go(n) {
+            idx = (n + slides.length) % slides.length;
+            track.style.transform = "translateX(-" + idx * 100 + "%)";
+            dots.forEach(function (d, k) { d.classList.toggle("active", k === idx); });
+        }
+        function stop() { if (timer) { clearInterval(timer); timer = null; } }
+        function start() { if (!reduce && !timer) timer = setInterval(function () { go(idx + 1); }, 4000); }
+        function restart() { stop(); start(); }
+
+        $("slider-prev").addEventListener("click", function () { go(idx - 1); restart(); });
+        $("slider-next").addEventListener("click", function () { go(idx + 1); restart(); });
+        box.addEventListener("mouseenter", stop);
+        box.addEventListener("mouseleave", start);
+        box.addEventListener("focusin", stop);
+        box.addEventListener("focusout", start);
+        box.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; stop(); }, { passive: true });
+        box.addEventListener("touchend", function (e) {
+            if (x0 !== null) {
+                var dx = e.changedTouches[0].clientX - x0;
+                if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
+            }
+            x0 = null;
+            start();
+        }, { passive: true });
+        document.addEventListener("visibilitychange", function () { document.hidden ? stop() : start(); });
+
+        go(0);
+        start();
+    })();
+
+    initMarket();
     updateUI();
     route();
 })();
